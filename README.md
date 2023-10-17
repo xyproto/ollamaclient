@@ -22,7 +22,7 @@ The default model is `nous-hermes:latest`.
 
 - `-m`, `--model`: Specify an Ollama model. The default is `nous-hermes:latest`.
 - `-o`, `--output`: Define an output file to store the summary.
-- `-p`, `--prompt`: Specify a custom prompt header for summary. The default is `Write a short summary of what a project that contains the following files:`
+- `-p`, `--prompt`: Specify a custom prompt header for summary. The default is `Write a short summary of a project that contains the following files:`
 - `-w`, `--wrap`: Set the word wrap width. Use -1 to detect the terminal width.
 - `-v`, `--version`: Display the current version.
 - `-V`, `--verbose`: Enable verbose logging.
