@@ -13,7 +13,7 @@ import (
 
 const (
 	versionString    = "Summarize 1.4.0"
-	defaultModel     = "nous-hermes:latest"
+	defaultModel     = "nous-hermes:7b-llama2-q2_K"
 	defaultTermWidth = 79
 )
 

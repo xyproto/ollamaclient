@@ -11,6 +11,8 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
+const defaultModel ="nous-hermes:7b-llama2-q2_K"
+
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
 	API     string
@@ -70,7 +72,7 @@ type PullResponse struct {
 func New() *Config {
 	return &Config{
 		env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		env.Str("OLLAMA_MODEL", "nous-hermes:latest"),
+		env.Str("OLLAMA_MODEL", defaultModel),
 		env.Bool("OLLAMA_VERBOSE"),
 	}
 }
