@@ -1,1 +1,8 @@
+*.bak
+*.o
+*.swp
+*.tmp
+cmd/simple/main
+cmd/simple/simple
+include.txt
 ollamaclient
