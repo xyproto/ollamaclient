@@ -6,5 +6,7 @@ The default model is `nous-hermes:latest`.
 
 Example programs are in the `cmd` folder.
 
-Version: 0.0.0
-License: Apache2
+### General info
+
+* Version: 0.0.0
+* License: Apache2
