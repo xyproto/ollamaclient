@@ -31,14 +31,14 @@ Example programs are in the `cmd` folder.
 
 - `-V`, `--verbose`: Enables verbose logging.
 
-- `-w`, `--wrap`: Sets the word wrap width. Defaults to the terminal width.
+- `-w`, `--wrap`: Sets the word wrap width. Use -1 to detect the terminal width.
 
 #### Example use
 
 Generate a summary with a custom prompt:
 
 ```bash
-./summarize -p "Summarize these files:" README.md CONFIG.md
+./summarize -w -1 -p "Summarize these files:" README.md CONFIG.md
 ```
 
 Generate a summary, saving the output to a file:
@@ -63,6 +63,6 @@ These environment variables are supported:
 
 ### General info
 
-* Version: 1.1.0
+* Version: 1.2.0
 * License: Apache2
 * Author: Alexander F. Rødseth
