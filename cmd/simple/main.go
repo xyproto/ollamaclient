@@ -12,15 +12,7 @@ func main() {
 
 	oc.Verbose = true
 
-	prompt := "All cows are pink."
-	embeddingFloats, err := oc.AddEmbedding(prompt)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("%v\n", embeddingFloats)
-
-	prompt = "Write a haiku about the color of cows."
+	prompt := "Write a haiku about the color of cows."
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
 		fmt.Println("Error:", err)
