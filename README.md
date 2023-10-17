@@ -4,8 +4,6 @@ This is a Go package for using Ollama.
 
 The default model is `nous-hermes:latest`.
 
-Example programs are in the `cmd` folder.
-
 ### Getting started
 
 1. Install `ollama` and start it as a service.
@@ -23,15 +21,11 @@ Example programs are in the `cmd` folder.
 #### Flags
 
 - `-m`, `--model`: Specify an Ollama model. The default is `nous-hermes:latest`.
-
-- `-o`, `--output`: Defines an output file to store the summary.
-
-- `-p`, `--prompt`: Specifies a custom prompt header for summary.
-  Default: "Write a short summary of what a project that contains the following files is."
-
-- `-V`, `--verbose`: Enables verbose logging.
-
-- `-w`, `--wrap`: Sets the word wrap width. Use -1 to detect the terminal width.
+- `-o`, `--output`: Define an output file to store the summary.
+- `-p`, `--prompt`: Specify a custom prompt header for summary. The default is `Write a short summary of what a project that contains the following files:`
+- `-w`, `--wrap`: Set the word wrap width. Use -1 to detect the terminal width.
+- `-v`, `--version`: Display the current version.
+- `-V`, `--verbose`: Enable verbose logging.
 
 #### Example use
 
