@@ -12,6 +12,11 @@ func main() {
 
 	oc.Verbose = true
 
+	if _, err := oc.Pull(); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
 	prompt := "Write a haiku about the color of cows."
 	output, err := oc.GetOutput(prompt)
 	if err != nil {

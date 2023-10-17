@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	versionString    = "Summarize 1.4.0"
 	defaultModel     = "nous-hermes:latest"
 	defaultTermWidth = 79
 )
@@ -34,9 +35,11 @@ func getTerminalWidth() int {
 }
 
 func main() {
-	var promptHeader, outputFile, model string
-	var wrapWidth int
-	var noHeader bool
+	var (
+		promptHeader, outputFile, model string
+		wrapWidth                       int
+		noHeader, showVersion           bool
+	)
 
 	pflag.BoolVarP(&verbose, "verbose", "V", false, "verbose output")
 	pflag.StringVarP(&promptHeader, "prompt", "p", "Write a short summary of what a project that contains the following files is:", "Provide a custom prompt header")
@@ -44,7 +47,14 @@ func main() {
 	pflag.StringVarP(&model, "model", "m", defaultModel, "Specify the Ollama model to use")
 	pflag.IntVarP(&wrapWidth, "wrap", "w", 0, "Word wrap at specified width. Use '-1' for terminal width")
 	pflag.BoolVarP(&noHeader, "no-header", "n", false, "Do not include filenames in the prompt")
+	pflag.BoolVarP(&showVersion, "version", "v", false, "display version")
+
 	pflag.Parse()
+
+	if showVersion {
+		fmt.Println(versionString)
+		return
+	}
 
 	if wrapWidth == -1 {
 		wrapWidth = getTerminalWidth()
@@ -78,6 +88,13 @@ func main() {
 	if model != defaultModel {
 		oc.Model = model
 	}
+
+	logVerbose("[%s] Downloading model, if needed... ", oc.Model)
+	if _, err := oc.Pull(); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	logVerbose("OK\n")
 
 	logVerbose("[%s] Generating... ", oc.Model)
 	output, err := oc.GetOutput(prompt)
