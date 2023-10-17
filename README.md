@@ -10,7 +10,7 @@ Example programs are in the `cmd` folder.
 
 1. Install `ollama` and start it as a service.
 2. Run `ollama pull nous-hermes` to fetch the `nous-hermes` model.
-3. Install the summarizer utility: `go install github.com/xyproto/ollamaclient/cmd/summarizer@latest`
+3. Install the summarizer utility: `go install github.com/xyproto/ollamaclient/cmd/summarize@latest`
 4. Summarize a README.md file and a source code file: `summarize README.md ollamaclient.go`
 5. Write a poem about one or more files: `summarize --prompt "Write a poem about the following files:" README.md`
 
