@@ -5,38 +5,68 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/pflag"
 	"github.com/xyproto/ollamaclient"
 )
 
+var verbose bool
+
+// Only print the provided data when in verbose mode
+func logVerbose(format string, a ...interface{}) {
+	if verbose {
+		fmt.Printf(format, a...)
+	}
+}
+
 func main() {
-	oc := ollamaclient.New()
+	// Flags
+	var promptHeader string
 
-	//oc.Verbose = true
+	pflag.BoolVarP(&verbose, "verbose", "V", false, "verbose output")
+	pflag.StringVarP(&promptHeader, "prompt", "p", "Write a short summary of what a project that contains the following files is:", "Provide a custom prompt header")
+	pflag.Parse()
 
-	filenames := []string{"../../README.md", "../../ollamaclient.go"}
+	// Retrieve non-flag arguments
+	filenames := pflag.Args()
+	if len(filenames) < 1 {
+		fmt.Println("Usage: summarize [--prompt <customPrompt>] <filename1> [<filename2> ...]")
+		fmt.Println("Error: Please provide at least one filename.")
+		os.Exit(1)
+	}
 
+	// Build a prompt by reading in all given filenames
 	var sb strings.Builder
+	readCount := 0
 	for _, filename := range filenames {
-		fmt.Printf("Reading %s...", filename)
+		logVerbose("[%s] Reading... ", filename)
 		data, err := os.ReadFile(filename)
 		if err != nil {
-			fmt.Println("Skipping %s, got error: %s\n", filename, err)
+			fmt.Printf("error: %s\n", err)
 			continue
 		}
-		fmt.Println("ok")
+		readCount++
+		logVerbose("OK\n")
 		sb.WriteString(filename + ":\n")
 		sb.Write(data)
 	}
 
-	prompt := "Write a short summary of what a project that contains the following files is:\n\n" + sb.String()
+	if readCount == 0 {
+		fmt.Println("Error: No files could be read.")
+		os.Exit(1)
+	}
 
-	fmt.Printf("Sending request to Ollama, using the %s model...\n", oc.Model)
+	prompt := promptHeader + "\n\n" + sb.String()
 
+	// Generate text with Ollama
+	oc := ollamaclient.New()
+	logVerbose("[%s] Generating... ", oc.Model)
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
-
+		fmt.Printf("error: %s\n", err)
+		os.Exit(1)
 	}
-	fmt.Printf("\n%s\n", strings.TrimSpace(output))
+
+	// Output the result
+	logVerbose("OK\n")
+	fmt.Println(strings.TrimSpace(output))
 }
