@@ -11,7 +11,7 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-const defaultModel ="nous-hermes:7b-llama2-q2_K"
+const defaultModel = "nous-hermes:7b-llama2-q2_K"
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
