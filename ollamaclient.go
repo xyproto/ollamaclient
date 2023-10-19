@@ -4,9 +4,11 @@ package ollamaclient
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/xyproto/env/v2"
 )
@@ -68,6 +70,13 @@ type PullResponse struct {
 	Total  int64  `json:"total"`
 }
 
+// ListResponse represents the response data from the tag API call
+type ListResponse struct {
+	Name     string    `json:"name"`
+	Modified time.Time `json:"modified_at"`
+	Size     int64     `json:"size"`
+}
+
 // New initializes a new Config using environment variables
 func New() *Config {
 	return &Config{
@@ -104,6 +113,7 @@ func (c *Config) GetOutput(prompt string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -117,6 +127,7 @@ func (c *Config) GetOutput(prompt string) (string, error) {
 		}
 	}
 	return sb.String(), nil
+
 }
 
 // AddEmbedding sends a request to get embeddings for a given prompt
@@ -152,7 +163,7 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 func (c *Config) Pull() (string, error) {
 	reqBody := PullRequest{
 		Name:   c.Model,
-		Stream: false,
+		Stream: true,
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
@@ -161,16 +172,84 @@ func (c *Config) Pull() (string, error) {
 	if c.Verbose {
 		fmt.Printf("Sending request to /api/pull: %s\n", string(reqBytes))
 	}
+
 	resp, err := http.Post(c.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
-	var pullResp PullResponse
-	if err := decoder.Decode(&pullResp); err != nil {
-		return "", err
+
+	fmt.Printf("Downloading %s...", c.Model)
+	for {
+		var pullResp PullResponse
+		if err := decoder.Decode(&pullResp); err != nil {
+			break
+		}
+		sb.WriteString(pullResp.Status)
+		if !strings.HasPrefix(pullResp.Status, "downloading ") && !strings.HasPrefix(pullResp.Status, "pulling ") {
+			fmt.Println("GOT WEIRD STATUS: " + pullResp.Status)
+			break
+		} else {
+			fmt.Print(".")
+			fmt.Println(c.SizeOf(c.Model))
+			fmt.Println(pullResp.Total)
+		}
+		time.Sleep(1 * time.Second)
 	}
-	return pullResp.Status, nil
+	fmt.Println(" OK")
+
+	return sb.String(), nil
+}
+
+// TODO Call api/tags
+func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
+	reqBytes := []byte{}
+
+	if c.Verbose {
+		fmt.Println("Sending request to /api/tags")
+	}
+
+	resp, err := http.Post(c.API+"/api/tags", "application/json", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer resp.Body.Close()
+
+	decoder := json.NewDecoder(resp.Body)
+	var listResp []ListResponse
+	if err := decoder.Decode(&listResp); err != nil {
+		return nil, nil, nil, err
+	}
+
+	// TODO: Now convert models[].name, models[].modified_at and models[].size to []names, map[name]time and map[name]size
+
+	var names []string
+
+	modifiedMap := make(map[string]time.Time)
+	sizeMap := make(map[string]int64)
+
+	for _, model := range listResp {
+		names = append(names, model.Name)
+		modifiedMap[model.Name] = model.Modified
+		sizeMap[model.Name] = model.Size
+	}
+
+	return names, modifiedMap, sizeMap, nil
+}
+
+// SizeOf returns the current size of the given model, or returns (-1, err) if it can't be found
+func (c *Config) SizeOf(model string) (int64, error) {
+	names, _, sizeMap, err := c.List()
+	if err != nil {
+		return 0, err
+	}
+	for _, name := range names {
+		if name == model {
+			return sizeMap[name], nil
+		}
+	}
+	return -1, errors.New("could not find model: " + model)
 }
