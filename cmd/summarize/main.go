@@ -90,7 +90,7 @@ func main() {
 	}
 
 	logVerbose("[%s] Downloading model, if needed... ", oc.Model)
-	if _, err := oc.Pull(); err != nil {
+	if err := oc.PullIfNeeded(); err != nil {
 		fmt.Println("Error:", err)
 		return
 	}

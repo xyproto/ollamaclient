@@ -12,7 +12,7 @@ func main() {
 
 	oc.Verbose = true
 
-	if _, err := oc.Pull(); err != nil {
+	if err := oc.PullIfNeeded(); err != nil {
 		fmt.Println("Error:", err)
 		return
 	}

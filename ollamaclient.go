@@ -70,11 +70,17 @@ type PullResponse struct {
 	Total  int64  `json:"total"`
 }
 
-// ListResponse represents the response data from the tag API call
-type ListResponse struct {
+// Model represents a downloaded model
+type Model struct {
 	Name     string    `json:"name"`
 	Modified time.Time `json:"modified_at"`
 	Size     int64     `json:"size"`
+	Digest   string    `json:"digest"`
+}
+
+// ListResponse represents the response data from the tag API call
+type ListResponse struct {
+	Models []Model `json:"models"`
 }
 
 // New initializes a new Config using environment variables
@@ -182,7 +188,9 @@ func (c *Config) Pull() (string, error) {
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 
-	fmt.Printf("Downloading %s...", c.Model)
+	if c.Verbose {
+		fmt.Printf("Downloading and/or updating %s...", c.Model)
+	}
 	for {
 		var pullResp PullResponse
 		if err := decoder.Decode(&pullResp); err != nil {
@@ -190,53 +198,46 @@ func (c *Config) Pull() (string, error) {
 		}
 		sb.WriteString(pullResp.Status)
 		if !strings.HasPrefix(pullResp.Status, "downloading ") && !strings.HasPrefix(pullResp.Status, "pulling ") {
-			fmt.Println("GOT WEIRD STATUS: " + pullResp.Status)
-			break
-		} else {
-			fmt.Print(".")
-			fmt.Println(c.SizeOf(c.Model))
-			fmt.Println(pullResp.Total)
+			if strings.HasPrefix(pullResp.Status, "verifying ") { // done downloading
+				break
+			}
+			return "", fmt.Errorf("recevied status when downloading: %s", pullResp.Status)
 		}
+		if c.Verbose {
+			fmt.Print(".")
+		}
+		// Update the progress status every second
 		time.Sleep(1 * time.Second)
 	}
-	fmt.Println(" OK")
-
+	if c.Verbose {
+		fmt.Println(" OK")
+	}
 	return sb.String(), nil
 }
 
-// TODO Call api/tags
+// List collects info about the currently downloaded models
 func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
-	reqBytes := []byte{}
-
 	if c.Verbose {
 		fmt.Println("Sending request to /api/tags")
 	}
-
-	resp, err := http.Post(c.API+"/api/tags", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Get(c.API + "/api/tags")
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	defer resp.Body.Close()
-
 	decoder := json.NewDecoder(resp.Body)
-	var listResp []ListResponse
+	var listResp ListResponse
 	if err := decoder.Decode(&listResp); err != nil {
 		return nil, nil, nil, err
 	}
-
-	// TODO: Now convert models[].name, models[].modified_at and models[].size to []names, map[name]time and map[name]size
-
 	var names []string
-
 	modifiedMap := make(map[string]time.Time)
 	sizeMap := make(map[string]int64)
-
-	for _, model := range listResp {
+	for _, model := range listResp.Models {
 		names = append(names, model.Name)
 		modifiedMap[model.Name] = model.Modified
 		sizeMap[model.Name] = model.Size
 	}
-
 	return names, modifiedMap, sizeMap, nil
 }
 
@@ -252,4 +253,34 @@ func (c *Config) SizeOf(model string) (int64, error) {
 		}
 	}
 	return -1, errors.New("could not find model: " + model)
+}
+
+// Has returns true if the given model exists locally
+func (c *Config) Has(model string) bool {
+	if names, _, _, err := c.List(); err == nil { // success
+		for _, name := range names {
+			if name == model {
+				return true
+			}
+		}
+	} else {
+		fmt.Println("error when calling /api/tags: " + err.Error())
+	}
+	return false
+}
+
+// HasModel returns true if the configured model exists locally
+func (c *Config) HasModel() bool {
+	return c.Has(c.Model)
+}
+
+// PullIfNeeded pulls a model, but only if it's not already there.
+// While Pull downloads/updates the model regardless.
+func (c *Config) PullIfNeeded() error {
+	if !c.HasModel() {
+		if _, err := c.Pull(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
