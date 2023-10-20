@@ -57,6 +57,6 @@ These environment variables are supported:
 
 ### General info
 
-* Version: 1.4.0
+* Version: 1.5.0
 * License: Apache2
 * Author: Alexander F. Rødseth
