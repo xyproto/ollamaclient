@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	// oc := ollamaclient.New()
+	// oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
         oc := ollamaclient.NewWithModel("mistral:instruct")
 
 	oc.Verbose = true
