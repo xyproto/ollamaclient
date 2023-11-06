@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	oc := ollamaclient.New()
-        // oc := ollamaclient.NewWithModel("mistral:instruct")
+	// oc := ollamaclient.New()
+        oc := ollamaclient.NewWithModel("mistral:instruct")
 
 	oc.Verbose = true
 
