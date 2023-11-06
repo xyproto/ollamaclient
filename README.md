@@ -6,7 +6,7 @@ The default model is `nous-hermes:7b-llama2-q2_K`.
 
 ### Example use
 
-```
+```go
 package main
 
 import (
