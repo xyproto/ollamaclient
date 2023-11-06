@@ -18,6 +18,7 @@ import (
 
 func main() {
 	// oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
+
         oc := ollamaclient.NewWithModel("mistral:instruct")
 
 	oc.Verbose = true
@@ -41,11 +42,11 @@ Example output:
 
 ```
 Sending request to /api/tags
-Sending request to /api/generate: {"model":"nous-hermes:7b-llama2-q2_K","prompt":"Write a haiku about the color of cows."}
+Sending request to /api/generate: {"model":"mistral:instruct","prompt":"Write a haiku about the color of cows."}
 
-Cow, the color
-Of grass and meadow glee
-The mossy shade.
+Majestic brown cows
+Grazing in green fields so serene
+Nature's masterpiece
 ```
 
 ### Getting started with the summarize utility in cmd/summarize
