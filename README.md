@@ -4,7 +4,7 @@ This is a Go package for using Ollama.
 
 The default model is `nous-hermes:7b-llama2-q2_K`.
 
-### Getting started
+### Getting started with the summarize utility in cmd/summarize
 
 1. Install `ollama` and start it as a service.
 2. Run `ollama pull nous-hermes:7b-llama2-q2_K` to fetch the `nous-hermes:7b-llama2-q2_K` model.
