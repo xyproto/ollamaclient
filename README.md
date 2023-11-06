@@ -47,6 +47,8 @@ Grazing in green fields so serene
 Nature's masterpiece
 ```
 
+Make sure to install and run Ollama first.
+
 ### Environment variables
 
 These environment variables are supported:
