@@ -1,8 +1,6 @@
 # ollamaclient
 
-This is a Go package for using Ollama.
-
-The default model is `nous-hermes:7b-llama2-q2_K`.
+A Go package for using Ollama and large language models (LLMs).
 
 ### Example use
 
