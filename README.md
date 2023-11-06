@@ -4,6 +4,49 @@ This is a Go package for using Ollama.
 
 The default model is `nous-hermes:7b-llama2-q2_K`.
 
+### Example use
+
+```
+package main
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/xyproto/ollamaclient"
+)
+
+func main() {
+	oc := ollamaclient.New()
+
+	oc.Verbose = true
+
+	if err := oc.PullIfNeeded(); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	prompt := "Write a haiku about the color of cows."
+	output, err := oc.GetOutput(prompt)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Printf("\n%s\n", strings.TrimSpace(output))
+}
+```
+
+Example output:
+
+```
+Sending request to /api/tags
+Sending request to /api/generate: {"model":"nous-hermes:7b-llama2-q2_K","prompt":"Write a haiku about the color of cows."}
+
+Cow, the color
+Of grass and meadow glee
+The mossy shade.
+```
+
 ### Getting started with the summarize utility in cmd/summarize
 
 1. Install `ollama` and start it as a service.
