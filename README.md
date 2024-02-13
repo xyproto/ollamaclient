@@ -54,7 +54,7 @@ Make sure to install and run Ollama first.
 These environment variables are supported:
 
 * `OLLAMA_HOST` (`http://localhost:11434` by default)
-* `OLLAMA_MODEL` (`nous-hermes:7b-llama2-q2_K` by default
+* `OLLAMA_MODEL` (`nous-hermes:7b-llama2-q2_K` by default)
 * `OLLAMA_VERBOSE` (`false` by default)
 
 ### The `summarize` utility
