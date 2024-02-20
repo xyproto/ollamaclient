@@ -193,7 +193,7 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 }
 
 // Pull sends a request to pull a specified model from the Ollama API
-func (c *Config) Pull() (string, error) {
+func (c *Config) Pull(optionalVerbose ...bool) (string, error) {
 	reqBody := PullRequest{
 		Name:   c.Model,
 		Stream: true,
@@ -202,7 +202,11 @@ func (c *Config) Pull() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if c.Verbose {
+	verbose := c.Verbose
+	if len(optionalVerbose) > 0 && optionalVerbose[0] {
+		verbose = true
+	}
+	if verbose {
 		fmt.Printf("Sending request to /api/pull: %s\n", string(reqBytes))
 	}
 
@@ -215,7 +219,7 @@ func (c *Config) Pull() (string, error) {
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 
-	if c.Verbose {
+	if verbose {
 		fmt.Printf("Downloading and/or updating %s...", c.Model)
 	}
 	for {
@@ -230,13 +234,13 @@ func (c *Config) Pull() (string, error) {
 			}
 			return "", fmt.Errorf("recevied status when downloading: %s", pullResp.Status)
 		}
-		if c.Verbose {
+		if verbose {
 			fmt.Print(".")
 		}
 		// Update the progress status every second
 		time.Sleep(1 * time.Second)
 	}
-	if c.Verbose {
+	if verbose {
 		fmt.Println(" OK")
 	}
 	return sb.String(), nil
