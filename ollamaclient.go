@@ -17,29 +17,29 @@ const (
 	defaultModel            = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
 	defaultPullTimeout      = 48 * time.Hour               // pretty generous, in case someone has a poor connection
 	defaultHTTPTimeout      = 10 * time.Minute             // per HTTP request to Ollama
-	defaultReproducibleSeed = 1337                         // the seed to use together with temperature 0 for when the output should be reproducible
+	defaultReproducibleSeed = 1337                         // for when generated output should not be random, but have temperature 0 and a specific seed
 )
 
 var (
-	// HttpClient is the HTTP client that will be used to communicate with the Ollama server
-	HttpClient = &http.Client{
+	// HTTPClient is the HTTP client that will be used to communicate with the Ollama server
+	HTTPClient = &http.Client{
 		Timeout: defaultHTTPTimeout,
 	}
 )
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
-	API          string
-	Model        string
-	Verbose      bool
-	PullTimeout  time.Duration
-	Reproducible bool
+	API              string
+	Model            string
+	Verbose          bool
+	PullTimeout      time.Duration
+	ReproducibleSeed int
 }
 
 // RequestOptions holds the seed and temperature
 type RequestOptions struct {
-	Seed        int `json:"seed"`
-	Temperature int `json:"temperature"`
+	Seed        int     `json:"seed"`
+	Temperature float64 `json:"temperature"`
 }
 
 // GenerateRequest represents the request payload for generating output
@@ -107,66 +107,66 @@ type ListResponse struct {
 // New initializes a new Config using environment variables
 func New() *Config {
 	return &Config{
-		API:          env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		Model:        env.Str("OLLAMA_MODEL", defaultModel),
-		Verbose:      env.Bool("OLLAMA_VERBOSE"),
-		PullTimeout:  defaultPullTimeout,
-		Reproducible: true,
+		API:              env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:            env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
 // NewWithModel initializes a new Config using a specified model and environment variables
 func NewWithModel(model string) *Config {
 	return &Config{
-		API:          env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		Model:        model,
-		Verbose:      env.Bool("OLLAMA_VERBOSE"),
-		PullTimeout:  defaultPullTimeout,
-		Reproducible: true,
+		API:              env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:            model,
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
 // NewWithAddr initializes a new Config using a specified address (like http://localhost:11434) and environment variables
 func NewWithAddr(addr string) *Config {
 	return &Config{
-		API:          addr,
-		Model:        env.Str("OLLAMA_MODEL", defaultModel),
-		Verbose:      env.Bool("OLLAMA_VERBOSE"),
-		PullTimeout:  defaultPullTimeout,
-		Reproducible: true,
+		API:              addr,
+		Model:            env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
 // NewWithModelAndAddr initializes a new Config using a specified model, address (like http://localhost:11434) and environment variables
 func NewWithModelAndAddr(model, addr string) *Config {
 	return &Config{
-		API:          addr,
-		Model:        model,
-		Verbose:      env.Bool("OLLAMA_VERBOSE"),
-		PullTimeout:  defaultPullTimeout,
-		Reproducible: true,
+		API:              addr,
+		Model:            model,
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
 // NewCustom initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
-func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration, reproducibleOutput bool) *Config {
+func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration, reproducibleSeed int) *Config {
 	return &Config{
 		addr,
 		model,
 		verbose,
 		pullTimeout,
-		reproducibleOutput,
+		reproducibleSeed,
 	}
 }
 
-// ReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed
-func (oc *Config) ReproducibleOutput() {
-	oc.Reproducible = true
+// SetReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed
+func (oc *Config) SetReproducibleOutput() {
+	oc.ReproducibleSeed = defaultReproducibleSeed
 }
 
-// ReproducibleOutput configures the generated output to not be reproducible
-func (oc *Config) RandomOutput() {
-	oc.Reproducible = true
+// SetRandomOutput configures the generated output to not be reproducible
+func (oc *Config) SetRandomOutput() {
+	oc.ReproducibleSeed = 0
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output
@@ -177,10 +177,15 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 	}
 
 	// Reproducible output
-	if oc.Reproducible {
+	if oc.ReproducibleSeed > 0 {
 		reqBody.Options = RequestOptions{
-			Seed:        defaultReproducibleSeed,
+			Seed:        oc.ReproducibleSeed,
 			Temperature: 0,
+		}
+	} else {
+		reqBody.Options = RequestOptions{
+			Seed:        -1,
+			Temperature: 0.7,
 		}
 	}
 
@@ -191,7 +196,7 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.API, string(reqBytes))
 	}
-	resp, err := HttpClient.Post(oc.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +244,7 @@ func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
 		fmt.Printf("Sending request to %s/api/embeddings: %s\n", oc.API, string(reqBytes))
 	}
 
-	resp, err := HttpClient.Post(oc.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return []float64{}, err
 	}
@@ -271,7 +276,7 @@ func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.API, string(reqBytes))
 	}
 
-	resp, err := HttpClient.Post(oc.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
