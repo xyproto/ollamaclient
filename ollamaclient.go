@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	defaultModel       = "nous-hermes:7b-llama2-q2_K"
-	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
-	defaultHTTPTimeout = 30 * time.Second // per HTTP request to Ollama
+	defaultModel       = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
+	defaultPullTimeout = 48 * time.Hour               // pretty generous, in case someone has a poor connection
+	defaultHTTPTimeout = 10 * time.Minute             // per HTTP request to Ollama
 )
 
 var (
