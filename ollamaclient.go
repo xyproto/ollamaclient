@@ -13,13 +13,25 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-const defaultModel = "nous-hermes:7b-llama2-q2_K"
+const (
+	defaultModel       = "nous-hermes:7b-llama2-q2_K"
+	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
+	defaultHTTPTimeout = 30 * time.Second // per HTTP request to Ollama
+)
+
+var (
+	// HttpClient is the HTTP client that will be used to communicate with the Ollama server
+	HttpClient = &http.Client{
+		Timeout: defaultHTTPTimeout,
+	}
+)
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
-	API     string
-	Model   string
-	Verbose bool
+	API         string
+	Model       string
+	Verbose     bool
+	PullTimeout time.Duration
 }
 
 // GenerateRequest represents the request payload for generating output
@@ -89,6 +101,7 @@ func New() *Config {
 		env.Str("OLLAMA_HOST", "http://localhost:11434"),
 		env.Str("OLLAMA_MODEL", defaultModel),
 		env.Bool("OLLAMA_VERBOSE"),
+		defaultPullTimeout,
 	}
 }
 
@@ -98,6 +111,7 @@ func NewWithModel(model string) *Config {
 		env.Str("OLLAMA_HOST", "http://localhost:11434"),
 		model,
 		env.Bool("OLLAMA_VERBOSE"),
+		defaultPullTimeout,
 	}
 }
 
@@ -107,6 +121,7 @@ func NewWithAddr(addr string) *Config {
 		addr,
 		env.Str("OLLAMA_MODEL", defaultModel),
 		env.Bool("OLLAMA_VERBOSE"),
+		defaultPullTimeout,
 	}
 }
 
@@ -116,32 +131,34 @@ func NewWithModelAndAddr(model, addr string) *Config {
 		addr,
 		model,
 		env.Bool("OLLAMA_VERBOSE"),
+		defaultPullTimeout,
 	}
 }
 
 // NewCustom initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
-func NewCustom(model, addr string, verbose bool) *Config {
+func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration) *Config {
 	return &Config{
 		addr,
 		model,
 		verbose,
+		pullTimeout,
 	}
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output
-func (c *Config) GetOutput(prompt string) (string, error) {
+func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, error) {
 	reqBody := GenerateRequest{
-		Model:  c.Model,
+		Model:  oc.Model,
 		Prompt: prompt,
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
 	}
-	if c.Verbose {
-		fmt.Printf("Sending request to /api/generate: %s\n", string(reqBytes))
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.API, string(reqBytes))
 	}
-	resp, err := http.Post(c.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HttpClient.Post(oc.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -159,14 +176,25 @@ func (c *Config) GetOutput(prompt string) (string, error) {
 			break
 		}
 	}
+	if len(optionalTrimSpace) > 0 && optionalTrimSpace[0] {
+		return strings.TrimSpace(sb.String()), nil
+	}
 	return sb.String(), nil
+}
 
+// MustOutput returns the output from Ollama, or the error as a string if not
+func (oc *Config) MustOutput(prompt string) string {
+	output, err := oc.GetOutput(prompt, true)
+	if err != nil {
+		return err.Error()
+	}
+	return output
 }
 
 // AddEmbedding sends a request to get embeddings for a given prompt
-func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
+func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
 	reqBody := EmbeddingsRequest{
-		Model:  c.Model,
+		Model:  oc.Model,
 		Prompt: prompt,
 	}
 	reqBytes, err := json.Marshal(reqBody)
@@ -174,11 +202,11 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 		return []float64{}, err
 	}
 
-	if c.Verbose {
-		fmt.Printf("Sending request to /api/embeddings: %s\n", string(reqBytes))
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/embeddings: %s\n", oc.API, string(reqBytes))
 	}
 
-	resp, err := http.Post(c.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HttpClient.Post(oc.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return []float64{}, err
 	}
@@ -193,24 +221,24 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 }
 
 // Pull sends a request to pull a specified model from the Ollama API
-func (c *Config) Pull(optionalVerbose ...bool) (string, error) {
+func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 	reqBody := PullRequest{
-		Name:   c.Model,
+		Name:   oc.Model,
 		Stream: true,
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
 	}
-	verbose := c.Verbose
+	verbose := oc.Verbose
 	if len(optionalVerbose) > 0 && optionalVerbose[0] {
 		verbose = true
 	}
 	if verbose {
-		fmt.Printf("Sending request to /api/pull: %s\n", string(reqBytes))
+		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.API, string(reqBytes))
 	}
 
-	resp, err := http.Post(c.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HttpClient.Post(oc.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -220,8 +248,10 @@ func (c *Config) Pull(optionalVerbose ...bool) (string, error) {
 	decoder := json.NewDecoder(resp.Body)
 
 	if verbose {
-		fmt.Printf("Downloading and/or updating %s...", c.Model)
+		fmt.Printf("Downloading and/or updating %s...", oc.Model)
 	}
+	gotUnusualStatus := false
+	start := time.Now()
 	for {
 		var pullResp PullResponse
 		if err := decoder.Decode(&pullResp); err != nil {
@@ -231,14 +261,23 @@ func (c *Config) Pull(optionalVerbose ...bool) (string, error) {
 		if !strings.HasPrefix(pullResp.Status, "downloading ") && !strings.HasPrefix(pullResp.Status, "pulling ") {
 			if strings.HasPrefix(pullResp.Status, "verifying ") { // done downloading
 				break
+			} else if verbose {
+				if !gotUnusualStatus {
+					fmt.Println()
+				}
+				fmt.Println(pullResp.Status)
+				gotUnusualStatus = true
 			}
 			return "", fmt.Errorf("recevied status when downloading: %s", pullResp.Status)
 		}
-		if verbose {
+		if verbose && !gotUnusualStatus {
 			fmt.Print(".")
 		}
 		// Update the progress status every second
 		time.Sleep(1 * time.Second)
+		if time.Since(start) > oc.PullTimeout {
+			return sb.String(), fmt.Errorf("pull timed out after %v", oc.PullTimeout)
+		}
 	}
 	if verbose {
 		fmt.Println(" OK")
@@ -247,11 +286,11 @@ func (c *Config) Pull(optionalVerbose ...bool) (string, error) {
 }
 
 // List collects info about the currently downloaded models
-func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
-	if c.Verbose {
-		fmt.Println("Sending request to /api/tags")
+func (oc *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/tags\n", oc.API)
 	}
-	resp, err := http.Get(c.API + "/api/tags")
+	resp, err := http.Get(oc.API + "/api/tags")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -273,8 +312,12 @@ func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error
 }
 
 // SizeOf returns the current size of the given model, or returns (-1, err) if it can't be found
-func (c *Config) SizeOf(model string) (int64, error) {
-	names, _, sizeMap, err := c.List()
+func (oc *Config) SizeOf(model string) (int64, error) {
+	model = strings.TrimSpace(model)
+	if !strings.Contains(model, ":") {
+		model += ":latest"
+	}
+	names, _, sizeMap, err := oc.List()
 	if err != nil {
 		return 0, err
 	}
@@ -287,8 +330,12 @@ func (c *Config) SizeOf(model string) (int64, error) {
 }
 
 // Has returns true if the given model exists locally
-func (c *Config) Has(model string) bool {
-	if names, _, _, err := c.List(); err == nil { // success
+func (oc *Config) Has(model string) bool {
+	model = strings.TrimSpace(model)
+	if !strings.Contains(model, ":") {
+		model += ":latest"
+	}
+	if names, _, _, err := oc.List(); err == nil { // success
 		for _, name := range names {
 			if name == model {
 				return true
@@ -301,15 +348,15 @@ func (c *Config) Has(model string) bool {
 }
 
 // HasModel returns true if the configured model exists locally
-func (c *Config) HasModel() bool {
-	return c.Has(c.Model)
+func (oc *Config) HasModel() bool {
+	return oc.Has(oc.Model)
 }
 
 // PullIfNeeded pulls a model, but only if it's not already there.
 // While Pull downloads/updates the model regardless.
-func (c *Config) PullIfNeeded(optionalVerbose ...bool) error {
-	if !c.HasModel() {
-		if _, err := c.Pull(optionalVerbose...); err != nil {
+func (oc *Config) PullIfNeeded(optionalVerbose ...bool) error {
+	if !oc.HasModel() {
+		if _, err := oc.Pull(optionalVerbose...); err != nil {
 			return err
 		}
 	}
