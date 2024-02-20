@@ -23,8 +23,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !oc.Has("tinyllama") {
-		fmt.Fprintln(os.Stderr, "Expected to have 'tinyllama' model downloaded, but it's not present")
+	if !oc.Has(model) {
+		fmt.Fprintf(os.Stderr, "Expected to have '%s' model downloaded, but it's not present\n", model)
 		os.Exit(1)
 	}
 
