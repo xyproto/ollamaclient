@@ -101,7 +101,7 @@ func NewWithModel(model string) *Config {
 	}
 }
 
-// NewWithAddr initializes a new Config using a specified address (like https://localhost:11434) and environment variables
+// NewWithAddr initializes a new Config using a specified address (like http://localhost:11434) and environment variables
 func NewWithAddr(addr string) *Config {
 	return &Config{
 		addr,
@@ -110,7 +110,7 @@ func NewWithAddr(addr string) *Config {
 	}
 }
 
-// NewWithModelAndAddr initializes a new Config using a specified model, address (like https://localhost:11434) and environment variables
+// NewWithModelAndAddr initializes a new Config using a specified model, address (like http://localhost:11434) and environment variables
 func NewWithModelAndAddr(model, addr string) *Config {
 	return &Config{
 		addr,
@@ -119,7 +119,7 @@ func NewWithModelAndAddr(model, addr string) *Config {
 	}
 }
 
-// NewCustom initializes a new Config using a specified model, address (like https://localhost:11434) and a verbose bool
+// NewCustom initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
 func NewCustom(model, addr string, verbose bool) *Config {
 	return &Config{
 		addr,
@@ -307,9 +307,9 @@ func (c *Config) HasModel() bool {
 
 // PullIfNeeded pulls a model, but only if it's not already there.
 // While Pull downloads/updates the model regardless.
-func (c *Config) PullIfNeeded() error {
+func (c *Config) PullIfNeeded(optionalVerbose ...bool) error {
 	if !c.HasModel() {
-		if _, err := c.Pull(); err != nil {
+		if _, err := c.Pull(optionalVerbose...); err != nil {
 			return err
 		}
 	}
