@@ -100,8 +100,12 @@ Generate a summary with custom word wrap width:
 ./summarize -w 100 README.md
 ```
 
+### Testing
+
+`go test` depends on a local Ollama server being up and running, and will attempt to download the `tinyllama` model (637 MiB).
+
 ### General info
 
-* Version: 1.6.2
+* Version: 1.6.3
 * License: Apache 2
 * Author: Alexander F. Rødseth
