@@ -19,7 +19,7 @@ func main() {
 	err := oc.PullIfNeeded(true)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to pull model: %v", err)
+		fmt.Fprintf(os.Stderr, "Failed to pull model: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -32,7 +32,7 @@ func main() {
 
 	generatedOutput := oc.MustOutput(prompt)
 	if generatedOutput == "" {
-		log.Println("fail")
+		log.Println("Could not generate output.")
 	}
 
 	fmt.Println(ollamaclient.Massage(generatedOutput))
