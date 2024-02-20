@@ -89,12 +89,10 @@ func main() {
 		oc.Model = model
 	}
 
-	logVerbose("[%s] Downloading model, if needed... ", oc.Model)
-	if err := oc.PullIfNeeded(); err != nil {
+	if err := oc.PullIfNeeded(verbose); err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
-	logVerbose("OK\n")
 
 	logVerbose("[%s] Generating... ", oc.Model)
 	output, err := oc.GetOutput(prompt)

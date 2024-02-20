@@ -15,7 +15,6 @@ import (
 
 const (
 	defaultModel            = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
-	defaultPullTimeout      = 48 * time.Hour               // pretty generous, in case someone has a poor connection
 	defaultHTTPTimeout      = 10 * time.Minute             // per HTTP request to Ollama
 	defaultReproducibleSeed = 1337                         // for when generated output should not be random, but have temperature 0 and a specific seed
 )
@@ -75,20 +74,6 @@ type EmbeddingsRequest struct {
 // EmbeddingsResponse represents the response data containing embeddings
 type EmbeddingsResponse struct {
 	Embeddings []float64 `json:"embedding"`
-}
-
-// PullRequest represents the request payload for pulling a model
-type PullRequest struct {
-	Name     string `json:"name"`
-	Insecure bool   `json:"insecure,omitempty"`
-	Stream   bool   `json:"stream,omitempty"`
-}
-
-// PullResponse represents the response data from the pull API call
-type PullResponse struct {
-	Status string `json:"status"`
-	Digest string `json:"digest"`
-	Total  int64  `json:"total"`
 }
 
 // Model represents a downloaded model
@@ -217,7 +202,7 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 	if len(optionalTrimSpace) > 0 && optionalTrimSpace[0] {
 		return strings.TrimSpace(sb.String()), nil
 	}
-	return sb.String(), nil
+	return strings.TrimPrefix(sb.String(), "\n"), nil
 }
 
 // MustOutput returns the output from Ollama, or the error as a string if not
@@ -256,71 +241,6 @@ func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
 		return []float64{}, err
 	}
 	return embResp.Embeddings, nil
-}
-
-// Pull sends a request to pull a specified model from the Ollama API
-func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
-	reqBody := PullRequest{
-		Name:   oc.Model,
-		Stream: true,
-	}
-	reqBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
-	}
-	verbose := oc.Verbose
-	if len(optionalVerbose) > 0 && optionalVerbose[0] {
-		verbose = true
-	}
-	if verbose {
-		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.API, string(reqBytes))
-	}
-
-	resp, err := HTTPClient.Post(oc.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var sb strings.Builder
-	decoder := json.NewDecoder(resp.Body)
-
-	if verbose {
-		fmt.Printf("Downloading and/or updating %s...", oc.Model)
-	}
-	gotUnusualStatus := false
-	start := time.Now()
-	for {
-		var pullResp PullResponse
-		if err := decoder.Decode(&pullResp); err != nil {
-			break
-		}
-		sb.WriteString(pullResp.Status)
-		if !strings.HasPrefix(pullResp.Status, "downloading ") && !strings.HasPrefix(pullResp.Status, "pulling ") {
-			if strings.HasPrefix(pullResp.Status, "verifying ") { // done downloading
-				break
-			} else if verbose {
-				if !gotUnusualStatus {
-					fmt.Println()
-				}
-				fmt.Println(pullResp.Status)
-				gotUnusualStatus = true
-			}
-			return "", fmt.Errorf("recevied status when downloading: %s", pullResp.Status)
-		}
-		if verbose && !gotUnusualStatus {
-			fmt.Print(".")
-		}
-		// Update the progress status every second
-		time.Sleep(1 * time.Second)
-		if time.Since(start) > oc.PullTimeout {
-			return sb.String(), fmt.Errorf("pull timed out after %v", oc.PullTimeout)
-		}
-	}
-	if verbose {
-		fmt.Println(" OK")
-	}
-	return sb.String(), nil
 }
 
 // List collects info about the currently downloaded models

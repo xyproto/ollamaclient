@@ -2,26 +2,24 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/xyproto/ollamaclient"
 )
 
 func main() {
-	oc := ollamaclient.New()
+	oc := ollamaclient.NewWithModel("tinyllama")
 
-	oc.Verbose = true
-
-	if err := oc.PullIfNeeded(); err != nil {
+	if err := oc.PullIfNeeded(true); err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
 	prompt := "Write a haiku about the color of cows."
-	output, err := oc.GetOutput(prompt)
+	output, err := oc.GetOutput(prompt, true)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
-	fmt.Printf("\n%s\n", strings.TrimSpace(output))
+
+	fmt.Println(output)
 }
