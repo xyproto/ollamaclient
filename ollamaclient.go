@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	defaultModel       = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
-	defaultPullTimeout = 48 * time.Hour               // pretty generous, in case someone has a poor connection
-	defaultHTTPTimeout = 10 * time.Minute             // per HTTP request to Ollama
+	defaultModel            = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
+	defaultPullTimeout      = 48 * time.Hour               // pretty generous, in case someone has a poor connection
+	defaultHTTPTimeout      = 10 * time.Minute             // per HTTP request to Ollama
+	defaultReproducibleSeed = 1337                         // the seed to use together with temperature 0 for when the output should be reproducible
 )
 
 var (
@@ -28,16 +29,24 @@ var (
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
-	API         string
-	Model       string
-	Verbose     bool
-	PullTimeout time.Duration
+	API          string
+	Model        string
+	Verbose      bool
+	PullTimeout  time.Duration
+	Reproducible bool
+}
+
+// RequestOptions holds the seed and temperature
+type RequestOptions struct {
+	Seed        int `json:"seed"`
+	Temperature int `json:"temperature"`
 }
 
 // GenerateRequest represents the request payload for generating output
 type GenerateRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
+	Model   string         `json:"model"`
+	Prompt  string         `json:"prompt"`
+	Options RequestOptions `json:"options"`
 }
 
 // GenerateResponse represents the response data from the generate API call
@@ -98,51 +107,66 @@ type ListResponse struct {
 // New initializes a new Config using environment variables
 func New() *Config {
 	return &Config{
-		env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		env.Str("OLLAMA_MODEL", defaultModel),
-		env.Bool("OLLAMA_VERBOSE"),
-		defaultPullTimeout,
+		API:          env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:        env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:      env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:  defaultPullTimeout,
+		Reproducible: true,
 	}
 }
 
 // NewWithModel initializes a new Config using a specified model and environment variables
 func NewWithModel(model string) *Config {
 	return &Config{
-		env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		model,
-		env.Bool("OLLAMA_VERBOSE"),
-		defaultPullTimeout,
+		API:          env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:        model,
+		Verbose:      env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:  defaultPullTimeout,
+		Reproducible: true,
 	}
 }
 
 // NewWithAddr initializes a new Config using a specified address (like http://localhost:11434) and environment variables
 func NewWithAddr(addr string) *Config {
 	return &Config{
-		addr,
-		env.Str("OLLAMA_MODEL", defaultModel),
-		env.Bool("OLLAMA_VERBOSE"),
-		defaultPullTimeout,
+		API:          addr,
+		Model:        env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:      env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:  defaultPullTimeout,
+		Reproducible: true,
 	}
 }
 
 // NewWithModelAndAddr initializes a new Config using a specified model, address (like http://localhost:11434) and environment variables
 func NewWithModelAndAddr(model, addr string) *Config {
 	return &Config{
-		addr,
-		model,
-		env.Bool("OLLAMA_VERBOSE"),
-		defaultPullTimeout,
+		API:          addr,
+		Model:        model,
+		Verbose:      env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:  defaultPullTimeout,
+		Reproducible: true,
 	}
 }
 
 // NewCustom initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
-func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration) *Config {
+func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration, reproducibleOutput bool) *Config {
 	return &Config{
 		addr,
 		model,
 		verbose,
 		pullTimeout,
+		reproducibleOutput,
 	}
+}
+
+// ReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed
+func (oc *Config) ReproducibleOutput() {
+	oc.Reproducible = true
+}
+
+// ReproducibleOutput configures the generated output to not be reproducible
+func (oc *Config) RandomOutput() {
+	oc.Reproducible = true
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output
@@ -151,6 +175,15 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 		Model:  oc.Model,
 		Prompt: prompt,
 	}
+
+	// Reproducible output
+	if oc.Reproducible {
+		reqBody.Options = RequestOptions{
+			Seed:        defaultReproducibleSeed,
+			Temperature: 0,
+		}
+	}
+
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
