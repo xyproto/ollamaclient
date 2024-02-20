@@ -8,31 +8,31 @@ A Go package for using Ollama and large language models (LLMs).
 package main
 
 import (
-	"fmt"
-	"strings"
+    "fmt"
+    "strings"
 
-	"github.com/xyproto/ollamaclient"
+    "github.com/xyproto/ollamaclient"
 )
 
 func main() {
-	// oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
+    // oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
 
-        oc := ollamaclient.NewWithModel("mistral:instruct")
+    oc := ollamaclient.NewWithModel("mistral:instruct")
 
-	oc.Verbose = true
+    oc.Verbose = true
 
-	if err := oc.PullIfNeeded(); err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+    if err := oc.PullIfNeeded(); err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
 
-	prompt := "Write a haiku about the color of cows."
-	output, err := oc.GetOutput(prompt)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("\n%s\n", strings.TrimSpace(output))
+    prompt := "Write a haiku about the color of cows."
+    output, err := oc.GetOutput(prompt)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Printf("\n%s\n", strings.TrimSpace(output))
 }
 ```
 
@@ -102,6 +102,6 @@ Generate a summary with custom word wrap width:
 
 ### General info
 
-* Version: 1.5.0
+* Version: 1.6.0
 * License: Apache 2
 * Author: Alexander F. Rødseth
