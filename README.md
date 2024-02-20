@@ -102,6 +102,6 @@ Generate a summary with custom word wrap width:
 
 ### General info
 
-* Version: 1.6.1
+* Version: 1.6.2
 * License: Apache 2
 * Author: Alexander F. Rødseth
