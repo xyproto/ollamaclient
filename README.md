@@ -15,9 +15,8 @@ import (
 )
 
 func main() {
-    // oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
-
-    oc := ollamaclient.NewWithModel("mistral:instruct")
+    oc := ollamaclient.New() // The default model is "nous-hermes:7b-llama2-q2_K"
+    oc.ModelName = "gemma:latest"
 
     oc.Verbose = true
 
@@ -32,7 +31,7 @@ func main() {
         fmt.Println("Error:", err)
         return
     }
-    fmt.Printf("\n%s\n", strings.TrimSpace(output))
+    fmt.Printf("\n%s\n", output)
 }
 ```
 
