@@ -9,9 +9,8 @@ package main
 
 import (
     "fmt"
-    "strings"
 
-    "github.com/xyproto/ollamaclient"
+    "github.com/xyproto/ollamaclient/v2"
 )
 
 func main() {
