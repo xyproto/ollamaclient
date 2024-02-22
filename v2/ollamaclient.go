@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/allegro/bigcache/v3"
+	"github.com/xyproto/bigcache"
 	"github.com/xyproto/env/v2"
 )
 
@@ -30,6 +30,8 @@ func InitCache() error {
 	defer cancel()
 	config := bigcache.DefaultConfig(24 * time.Hour)
 	config.HardMaxCacheSize = 256 // MB
+	config.StatsEnabled = false
+	config.Verbose = false
 	c, err := bigcache.New(ctx, config)
 	if err != nil {
 		return err
