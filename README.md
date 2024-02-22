@@ -15,7 +15,7 @@ import (
 
 func main() {
     oc := ollamaclient.New()
- 
+
     // Select a model. The default model is "tinyllama".
     // See: https://ollama.com/library/
     //oc.ModelName = "gemma:latest"
@@ -109,6 +109,6 @@ Generate a summary with custom word wrap width:
 
 ### General info
 
-* Version: 2.0.1
+* Version: 2.0.2
 * License: Apache 2
 * Author: Alexander F. Rødseth
