@@ -1,13 +1,13 @@
+# github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b
+## explicit; go 1.16
+github.com/allegro/bigcache/v3
+github.com/allegro/bigcache/v3/queue
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/xyproto/bigcache v0.0.0-20240222125046-e9c431906989
-## explicit; go 1.16
-github.com/xyproto/bigcache
-github.com/xyproto/bigcache/queue
 # github.com/xyproto/env/v2 v2.2.5
 ## explicit; go 1.19
 github.com/xyproto/env/v2
