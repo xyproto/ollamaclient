@@ -3,13 +3,14 @@ package ollamaclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/allegro/bigcache/v3"
 	"github.com/xyproto/env/v2"
 )
 
@@ -20,15 +21,15 @@ const (
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
 )
 
-var Cache *ristretto.Cache = nil
+// Cache is used for caching reproducible results from Ollama (seed -1, temperature 0)
+var Cache *bigcache.BigCache = nil
 
-// InitCache will initalize the Ristretto cache
+// InitCache initializes the BigCache cache
 func InitCache() error {
-	c, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 10000, // Adjusted for 1000 items, 10x for frequency tracking
-		MaxCost:     3000,  // Adjusted to the total size of 1000 * 3kb = 3000kb
-		BufferItems: 64,    // Number of keys per Get buffer, default is fine
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	config := bigcache.DefaultConfig(24 * time.Hour)
+	c, err := bigcache.New(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -93,9 +94,11 @@ func (oc *Config) SetRandom() {
 
 // GetOutput sends a request to the Ollama API and returns the generated output.
 func (oc *Config) GetOutput(prompt string) (string, error) {
-	var temperature float64
-	var cacheKey string
-	seed := oc.SeedOrNegative
+	var (
+		temperature float64
+		cacheKey    string
+		seed        = oc.SeedOrNegative
+	)
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	} else {
@@ -106,8 +109,8 @@ func (oc *Config) GetOutput(prompt string) (string, error) {
 				return "", err
 			}
 		}
-		if value, found := Cache.Get(cacheKey); found {
-			return value.(string), nil
+		if entry, err := Cache.Get(cacheKey); err == nil {
+			return string(entry), nil
 		}
 	}
 	reqBody := GenerateRequest{
@@ -150,7 +153,7 @@ func (oc *Config) GetOutput(prompt string) (string, error) {
 		outputString = strings.TrimSpace(outputString)
 	}
 	if cacheKey != "" {
-		Cache.Set(cacheKey, outputString, int64(len(outputString)))
+		Cache.Set(cacheKey, []byte(outputString))
 	}
 	return outputString, nil
 }
