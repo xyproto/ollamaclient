@@ -2,11 +2,10 @@
 *.o
 *.swp
 *.tmp
-cmd/fortune/main
-cmd/fortune/fortune
-cmd/simple/main
-cmd/simple/simple
-cmd/summarize/main
-cmd/summarize/summarize
+v2/cmd/fortune/main
+v2/cmd/fortune/fortune
+v2/cmd/simple/main
+v2/cmd/simple/simple
+v2/cmd/summarize/main
+v2/cmd/summarize/summarize
 include.txt
-ollamaclient

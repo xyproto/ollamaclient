@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
-	"github.com/xyproto/ollamaclient"
+	"github.com/xyproto/ollamaclient/v2"
 	"github.com/xyproto/wordwrap"
 	"golang.org/x/term"
 )
@@ -86,7 +86,7 @@ func main() {
 
 	oc := ollamaclient.New()
 	if model != defaultModel {
-		oc.Model = model
+		oc.ModelName = model
 	}
 
 	if err := oc.PullIfNeeded(verbose); err != nil {
@@ -94,7 +94,7 @@ func main() {
 		return
 	}
 
-	logVerbose("[%s] Generating... ", oc.Model)
+	logVerbose("[%s] Generating... ", oc.ModelName)
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
@@ -102,17 +102,16 @@ func main() {
 	}
 
 	logVerbose("OK\n")
-	trimmedOutput := strings.TrimSpace(output)
 
 	if wrapWidth > 0 {
-		lines, err := wordwrap.WordWrap(trimmedOutput, wrapWidth)
+		lines, err := wordwrap.WordWrap(output, wrapWidth)
 		if err == nil { // success
-			trimmedOutput = strings.Join(lines, "\n")
+			output = strings.Join(lines, "\n")
 		}
 	}
 
 	if outputFile != "" {
-		err := os.WriteFile(outputFile, []byte(trimmedOutput), 0o644)
+		err := os.WriteFile(outputFile, []byte(output), 0o644)
 		if err != nil {
 			fmt.Printf("error writing to file: %s\n", err)
 			os.Exit(1)
@@ -120,5 +119,5 @@ func main() {
 		return
 	}
 
-	fmt.Println(trimmedOutput)
+	fmt.Println(output)
 }

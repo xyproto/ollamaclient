@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/xyproto/ollamaclient"
+	"github.com/xyproto/ollamaclient/v2"
 )
 
 const (
@@ -14,7 +14,8 @@ const (
 )
 
 func main() {
-	oc := ollamaclient.NewWithModel(model)
+	oc := ollamaclient.New()
+	oc.ModelName = model
 
 	err := oc.PullIfNeeded(true)
 
@@ -23,12 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !oc.Has(model) {
+	if found, err := oc.Has(model); err != nil || !found {
 		fmt.Fprintf(os.Stderr, "Expected to have '%s' model downloaded, but it's not present\n", model)
 		os.Exit(1)
 	}
 
-	oc.SetRandomOutput()
+	oc.SetRandom()
 
 	generatedOutput := oc.MustOutput(prompt)
 	if generatedOutput == "" {
