@@ -29,6 +29,7 @@ func InitCache() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	config := bigcache.DefaultConfig(24 * time.Hour)
+	config.HardMaxCacheSize = 256 // MB
 	c, err := bigcache.New(ctx, config)
 	if err != nil {
 		return err
