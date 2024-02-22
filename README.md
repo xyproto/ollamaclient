@@ -16,11 +16,11 @@ import (
 func main() {
     oc := ollamaclient.New()
  
-    // Select a model. See https://ollama.com/library/
-    // The default model is "nous-hermes:7b-llama2-q2_K".
-    oc.ModelName = "gemma:latest"
+    // Select a model. The default model is "tinyllama".
+    // See: https://ollama.com/library/
+    //oc.ModelName = "gemma:latest"
     //oc.ModelName = "mixtral:instruct"
-    //oc.ModelName = "tinyllama"
+    //oc.ModelName = "nous-hermes:7b-llama2-q2_K"
 
     oc.Verbose = true
 
