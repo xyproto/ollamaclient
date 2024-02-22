@@ -1,9 +1,9 @@
-github.com/allegro/bigcache/v3 v3.1.0 h1:H2Vp8VOvxcrB91o86fUSVJFqeuz8kpyyB02eH3bSzwk=
-github.com/allegro/bigcache/v3 v3.1.0/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/xyproto/bigcache v0.0.0-20240222125046-e9c431906989 h1:jX8kd0r9Jo1WNlRL3ODKBeiHNVt7PKSs78wXnvLXNTw=
+github.com/xyproto/bigcache v0.0.0-20240222125046-e9c431906989/go.mod h1:eYBrLujNjTGtc+eCqDiEtfcNuoKn5iNl88bl2OAixvw=
 github.com/xyproto/env/v2 v2.2.5 h1:FNrp56sptc7ebC2QpM8lqKSGEb3UoYUJZZFl4bmcrPs=
 github.com/xyproto/env/v2 v2.2.5/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=

@@ -2,6 +2,7 @@ package bigcache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -57,16 +58,21 @@ func NewBigCache(config Config) (*BigCache, error) {
 
 func newBigCache(ctx context.Context, config Config, clock clock) (*BigCache, error) {
 	if !isPowerOfTwo(config.Shards) {
-		return nil, fmt.Errorf("Shards number must be power of two")
+		return nil, errors.New("Shards number must be power of two")
 	}
 	if config.MaxEntrySize < 0 {
-		return nil, fmt.Errorf("MaxEntrySize must be >= 0")
+		return nil, errors.New("MaxEntrySize must be >= 0")
 	}
 	if config.MaxEntriesInWindow < 0 {
-		return nil, fmt.Errorf("MaxEntriesInWindow must be >= 0")
+		return nil, errors.New("MaxEntriesInWindow must be >= 0")
 	}
 	if config.HardMaxCacheSize < 0 {
-		return nil, fmt.Errorf("HardMaxCacheSize must be >= 0")
+		return nil, errors.New("HardMaxCacheSize must be >= 0")
+	}
+
+	lifeWindowSeconds := uint64(config.LifeWindow.Seconds())
+	if config.CleanWindow > 0 && lifeWindowSeconds == 0 {
+		return nil, errors.New("LifeWindow must be >= 1s when CleanWindow is set")
 	}
 
 	if config.Hasher == nil {
@@ -75,7 +81,7 @@ func newBigCache(ctx context.Context, config Config, clock clock) (*BigCache, er
 
 	cache := &BigCache{
 		shards:     make([]*cacheShard, config.Shards),
-		lifeWindow: uint64(config.LifeWindow.Seconds()),
+		lifeWindow: lifeWindowSeconds,
 		clock:      clock,
 		hash:       config.Hasher,
 		config:     config,
@@ -105,7 +111,9 @@ func newBigCache(ctx context.Context, config Config, clock clock) (*BigCache, er
 			for {
 				select {
 				case <-ctx.Done():
-					fmt.Println("ctx done, shutting down bigcache cleanup routine")
+					if config.Verbose {
+						fmt.Println("ctx done, shutting down bigcache cleanup routine")
+					}
 					return
 				case t := <-ticker.C:
 					cache.cleanUp(uint64(t.Unix()))
@@ -154,7 +162,7 @@ func (c *BigCache) Set(key string, entry []byte) error {
 
 // Append appends entry under the key if key exists, otherwise
 // it will set the key (same behaviour as Set()). With Append() you can
-// concatenate multiple entries under the same key in an lock optimized way.
+// concatenate multiple entries under the same key in a lock-optimized way.
 func (c *BigCache) Append(key string, entry []byte) error {
 	hashedKey := c.hash.Sum64(key)
 	shard := c.getShard(hashedKey)
@@ -264,7 +272,9 @@ func (c *BigCache) notProvidedOnRemove(wrappedEntry []byte, reason RemoveReason)
 }
 
 func (c *BigCache) providedOnRemoveWithMetadata(wrappedEntry []byte, reason RemoveReason) {
-	hashedKey := c.hash.Sum64(readKeyFromEntry(wrappedEntry))
+	key := readKeyFromEntry(wrappedEntry)
+
+	hashedKey := c.hash.Sum64(key)
 	shard := c.getShard(hashedKey)
-	c.config.OnRemoveWithMetadata(readKeyFromEntry(wrappedEntry), readEntry(wrappedEntry), shard.getKeyMetadata(hashedKey))
+	c.config.OnRemoveWithMetadata(key, readEntry(wrappedEntry), shard.getKeyMetadata(hashedKey))
 }
