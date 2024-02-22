@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/xyproto/env/v2"
 )
 
@@ -18,6 +19,22 @@ const (
 	defaultFixedSeed   = 256              // for when generated output should not be random, but have temperature 0 and a specific seed
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
 )
+
+var Cache *ristretto.Cache = nil
+
+// InitCache will initalize the Ristretto cache
+func InitCache() error {
+	c, err := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 10000, // Adjusted for 1000 items, 10x for frequency tracking
+		MaxCost:     3000,  // Adjusted to the total size of 1000 * 3kb = 3000kb
+		BufferItems: 64,    // Number of keys per Get buffer, default is fine
+	})
+	if err != nil {
+		return err
+	}
+	Cache = c
+	return nil
+}
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
@@ -77,9 +94,21 @@ func (oc *Config) SetRandom() {
 // GetOutput sends a request to the Ollama API and returns the generated output.
 func (oc *Config) GetOutput(prompt string) (string, error) {
 	var temperature float64
+	var cacheKey string
 	seed := oc.SeedOrNegative
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
+	} else {
+		// The cache is only used for fixed seeds and a temperature of 0
+		cacheKey = prompt + "-" + oc.ModelName
+		if Cache == nil {
+			if err := InitCache(); err != nil {
+				return "", err
+			}
+		}
+		if value, found := Cache.Get(cacheKey); found {
+			return value.(string), nil
+		}
 	}
 	reqBody := GenerateRequest{
 		Model:  oc.ModelName,
@@ -118,7 +147,10 @@ func (oc *Config) GetOutput(prompt string) (string, error) {
 	}
 	outputString := strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
-		return strings.TrimSpace(outputString), nil
+		outputString = strings.TrimSpace(outputString)
+	}
+	if cacheKey != "" {
+		Cache.Set(cacheKey, outputString, int64(len(outputString)))
 	}
 	return outputString, nil
 }
