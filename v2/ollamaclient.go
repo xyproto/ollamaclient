@@ -196,7 +196,8 @@ func (oc *Config) List() ([]string, map[string]time.Time, map[string]int64, erro
 	return names, modifiedMap, sizeMap, nil
 }
 
-// SizeOf returns the current size of the given model, or returns (-1, err) if it can't be found
+// SizeOf returns the current size of the given model in bytes,
+// or returns (-1, err) if it the model can't  be found.
 func (oc *Config) SizeOf(model string) (int64, error) {
 	model = strings.TrimSpace(model)
 	if !strings.Contains(model, ":") {
