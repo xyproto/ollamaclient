@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -96,12 +97,21 @@ func (oc *Config) SetRandom() {
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutput(prompt string) (string, error) {
+func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	var (
 		temperature float64
 		cacheKey    string
 		seed        = oc.SeedOrNegative
 	)
+	if len(promptAndOptionalImages) == 0 {
+		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+	}
+	prompt := promptAndOptionalImages[0]
+	var images []string
+	if len(promptAndOptionalImages) > 1 {
+		images = promptAndOptionalImages[1:]
+	}
+
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	} else {
@@ -116,13 +126,27 @@ func (oc *Config) GetOutput(prompt string) (string, error) {
 			return string(entry), nil
 		}
 	}
-	reqBody := GenerateRequest{
-		Model:  oc.ModelName,
-		Prompt: prompt,
-		Options: RequestOptions{
-			Seed:        seed,        // set to -1 to make it random
-			Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
-		},
+	var reqBody GenerateRequest
+	if len(images) > 0 {
+		reqBody = GenerateRequest{
+			Model:  oc.ModelName,
+			Prompt: prompt,
+			//Stream: false,
+			Images: images,
+			Options: RequestOptions{
+				Seed:        seed,        // set to -1 to make it random
+				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
+			},
+		}
+	} else {
+		reqBody = GenerateRequest{
+			Model:  oc.ModelName,
+			Prompt: prompt,
+			Options: RequestOptions{
+				Seed:        seed,        // set to -1 to make it random
+				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
+			},
+		}
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
@@ -162,8 +186,8 @@ func (oc *Config) GetOutput(prompt string) (string, error) {
 }
 
 // MustOutput returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutput(prompt string) string {
-	output, err := oc.GetOutput(prompt)
+func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
+	output, err := oc.GetOutput(promptAndOptionalImages...)
 	if err != nil {
 		return err.Error()
 	}

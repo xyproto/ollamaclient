@@ -10,9 +10,11 @@ type RequestOptions struct {
 
 // GenerateRequest represents the request payload for generating output
 type GenerateRequest struct {
-	Model   string         `json:"model"`
-	Prompt  string         `json:"prompt"`
-	Options RequestOptions `json:"options"`
+	Model  string `json:"model"`
+	Prompt string `json:"prompt,omitempty"`
+	//Stream  bool           `json:"stream,omitempty"`
+	Images  []string       `json:"images,omitempty"` // base64 encoded images
+	Options RequestOptions `json:"options,omitempty"`
 }
 
 // GenerateResponse represents the response data from the generate API call
