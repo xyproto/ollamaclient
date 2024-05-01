@@ -54,44 +54,36 @@ Make sure to install and run Ollama first.
 
 ### Using images in the prompt, with the `llava` model
 
-Example use, loading in images from a slice of filenames and building a prompt with base64 encoded images, where the output is a description of the images:
+A simple way to describe images:
 
 ```go
-imageFilenames := []string{"example1.png", "example2.png"}
+package main
 
-var images []string
-for _, imageFilename := range imageFilenames {
-    if base64image, err := ollamaclient.Base64EncodeFile(imageFilename); err == nil { // success
-        // append the base64 encoded image to the "images" string slice
-        images = append(images, base64image)
+import (
+    "fmt"
+    "log"
+
+    "github.com/xyproto/ollamaclient/v2"
+)
+
+func main() {
+    oc := ollamaclient.New()
+    oc.ModelName = "llava"
+    oc.SetReproducible()
+    if err := oc.PullIfNeeded(true); err != nil {
+        log.Fatalln(err)
     }
+    imageFilenames := []string{"carrot1.png", "carrot2.png"}
+    const desiredWordCount = 7
+    description, err := oc.DescribeImages(imageFilenames, desiredWordCount)
+    if err != nil {
+        log.Fatalln(err)
+    }
+    fmt.Println(description)
 }
-
-var prompt string
-switch len(images) {
-case 0:
-    log.Fatalln("Error: no images to describe")
-case 1:
-    prompt = "Describe this image:"
-default:
-    prompt = "Describe these images:"
-}
-
-oc := ollamaclient.New()
-oc.ModelName = "llava"
-
-if err := oc.PullIfNeeded(verbose); err != nil {
-    fmt.Println("Error:", err)
-    return
-}
-oc.SetReproducible()
-
-promptAndImages := append([]string{prompt}, images...)
-
-output, err := oc.GetOutput(promptAndImages...)
 ```
 
-See `v2/cmd/describeimage` for a runnable example.
+See `v2/cmd/describeimage` for an example that uses a custom prompt.
 
 ### Environment variables
 
