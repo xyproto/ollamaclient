@@ -8,8 +8,10 @@ import (
 	"net/http"
 )
 
-// GetStreamingOutput sends a request to the Ollama API and returns the generated output via a callback function
-func (oc *Config) GetStreamingOutput(callbackFunction func(string), promptAndOptionalImages ...string) error {
+// StreamOutput sends a request to the Ollama API and returns the generated output via a callback function.
+// The callback function is given a string and "true" when the streaming is done (or if an error occurred).
+func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOptionalImages ...string) error {
+	defer callbackFunction("", true)
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
@@ -83,7 +85,7 @@ func (oc *Config) GetStreamingOutput(callbackFunction func(string), promptAndOpt
 			}
 			first = false
 		}
-		callbackFunction(answer)
+		callbackFunction(answer, false)
 		if genResp.Done {
 			break
 		}
