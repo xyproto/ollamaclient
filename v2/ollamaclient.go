@@ -354,3 +354,53 @@ func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) 
 
 	return oc.GetOutput(promptAndImages...)
 }
+
+// CreateModel creates a new model based on a Modelfile
+func (oc *Config) CreateModel(name, modelfile string) error {
+	reqBody := map[string]string{"name": name, "modelfile": modelfile}
+	reqBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(oc.ServerAddr+"/api/create", "application/json", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
+
+// CopyModel duplicates an existing model under a new name
+func (oc *Config) CopyModel(source, destination string) error {
+	reqBody := map[string]string{"source": source, "destination": destination}
+	reqBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(oc.ServerAddr+"/api/copy", "application/json", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
+
+// DeleteModel removes a model from the server
+func (oc *Config) DeleteModel(name string) error {
+	reqBody := map[string]string{"name": name}
+	reqBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("DELETE", oc.ServerAddr+"/api/delete", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
