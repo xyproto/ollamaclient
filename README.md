@@ -1,5 +1,7 @@
 # ollamaclient
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/xyproto/ollamaclient.svg)](https://pkg.go.dev/github.com/xyproto/ollamaclient)
+
 A Go package for using Ollama and large language models (LLMs).
 
 ### Example use
