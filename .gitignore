@@ -2,13 +2,11 @@
 *.o
 *.swp
 *.tmp
-v2/cmd/fortune/main
 v2/cmd/fortune/fortune
-v2/cmd/simple/main
 v2/cmd/simple/simple
-v2/cmd/summarize/main
 v2/cmd/summarize/summarize
-v2/cmd/describeimage/main
 v2/cmd/describeimage/describeimage
+v2/cmd/simpledescribe/simpledescribe
+v2/cmd/*/main
 include.txt
 .DS_Store
