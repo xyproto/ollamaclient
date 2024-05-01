@@ -85,6 +85,10 @@ func main() {
 
 See `v2/cmd/describeimage` for an example that uses a custom prompt.
 
+### Embeddings
+
+* The `.Embeddings` method can be used to pass in a prompt and return a `[]float64`.
+
 ### Environment variables
 
 These environment variables are supported:
@@ -142,6 +146,6 @@ Generate a summary with custom word wrap width:
 
 ### General info
 
-* Version: 2.1.0
+* Version: 2.2.0
 * License: Apache 2
 * Author: Alexander F. Rødseth
