@@ -22,8 +22,21 @@ const (
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
 )
 
+// Config represents configuration details for communicating with the Ollama API
+type Config struct {
+	ServerAddr                string
+	ModelName                 string
+	SeedOrNegative            int
+	TemperatureIfNegativeSeed float64
+	PullTimeout               time.Duration
+	HTTPTimeout               time.Duration
+	TrimSpace                 bool
+	Verbose                   bool
+	ContextLength             int64
+}
+
 // Cache is used for caching reproducible results from Ollama (seed -1, temperature 0)
-var Cache *bigcache.BigCache = nil
+var Cache *bigcache.BigCache
 
 // InitCache initializes the BigCache cache
 func InitCache() error {
@@ -41,21 +54,9 @@ func InitCache() error {
 	return nil
 }
 
-// Config represents configuration details for communicating with the Ollama API
-type Config struct {
-	ServerAddr                string
-	ModelName                 string
-	SeedOrNegative            int
-	TemperatureIfNegativeSeed float64
-	PullTimeout               time.Duration
-	HTTPTimeout               time.Duration
-	TrimSpace                 bool
-	Verbose                   bool
-}
-
 // New initializes a new Config using environment variables
 func New() *Config {
-	return &Config{
+	oc := Config{
 		ServerAddr:                env.Str("OLLAMA_HOST", "http://localhost:11434"),
 		ModelName:                 env.Str("OLLAMA_MODEL", defaultModel),
 		SeedOrNegative:            defaultFixedSeed,
@@ -65,11 +66,13 @@ func New() *Config {
 		TrimSpace:                 true,
 		Verbose:                   env.Bool("OLLAMA_VERBOSE"),
 	}
+	oc.modelSpecificAdjustments()
+	return &oc
 }
 
 // NewConfig initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
 func NewConfig(serverAddr, modelName string, seedOrNegative int, temperatureIfNegativeSeed float64, pTimeout, hTimeout time.Duration, trimSpace, verbose bool) *Config {
-	return &Config{
+	oc := Config{
 		ServerAddr:                serverAddr,
 		ModelName:                 modelName,
 		SeedOrNegative:            seedOrNegative,
@@ -78,6 +81,16 @@ func NewConfig(serverAddr, modelName string, seedOrNegative int, temperatureIfNe
 		HTTPTimeout:               hTimeout,
 		TrimSpace:                 trimSpace,
 		Verbose:                   verbose,
+	}
+	oc.modelSpecificAdjustments()
+	return &oc
+}
+
+// modelSpecificAdjustments will make adjustments for some specific model names
+func (oc *Config) modelSpecificAdjustments() {
+	switch oc.ModelName {
+	case "llama3-gradient":
+		oc.ContextLength = 256000 // can be set as high as 1M+, but this will requre 100GB+ memory
 	}
 }
 
@@ -94,6 +107,11 @@ func (oc *Config) SetReproducible(optionalSeed ...int) {
 // SetRandom configures the generated output to not be reproducible
 func (oc *Config) SetRandom() {
 	oc.SeedOrNegative = -1
+}
+
+// SetContextLength sets the context lenght for this Ollama config
+func (oc *Config) SetContextLength(contextLength int64) {
+	oc.ContextLength = contextLength
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output.
@@ -131,7 +149,6 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		reqBody = GenerateRequest{
 			Model:  oc.ModelName,
 			Prompt: prompt,
-			//Stream: false,
 			Images: images,
 			Options: RequestOptions{
 				Seed:        seed,        // set to -1 to make it random
@@ -148,6 +165,11 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 			},
 		}
 	}
+
+	if oc.ContextLength != 0 {
+		reqBody.Options.ContextLength = oc.ContextLength
+	}
+
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
@@ -302,12 +324,12 @@ func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) 
 
 	var images []string
 	for _, imageFilename := range imageFilenames {
-		if base64image, err := Base64EncodeFile(imageFilename); err != nil {
+		base64image, err := Base64EncodeFile(imageFilename)
+		if err != nil {
 			return "", fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
-		} else {
-			// append the base64 encoded image to the "images" string slice
-			images = append(images, base64image)
 		}
+		// append the base64 encoded image to the "images" string slice
+		images = append(images, base64image)
 	}
 
 	var prompt string
