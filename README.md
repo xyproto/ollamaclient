@@ -39,7 +39,7 @@ func main() {
 }
 ```
 
-Example output:
+Example output (with verbosity set to `true`):
 
 ```
 Sending request to /api/tags
