@@ -289,3 +289,46 @@ func ClearCache() {
 		Cache.Reset()
 	}
 }
+
+// DescribeImages can load a slice of image filenames into base64 encoded strings
+// and build a prompt that starts with "Describe this/these image(s):" followed
+// by the encoded images, and return a result. Typically used together with the "llava" model.
+func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) (string, error) {
+	var errNoImages = errors.New("must be given at least one image file to describe")
+
+	if len(imageFilenames) == 0 {
+		return "", errNoImages
+	}
+
+	var images []string
+	for _, imageFilename := range imageFilenames {
+		if base64image, err := Base64EncodeFile(imageFilename); err != nil {
+			return "", fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
+		} else {
+			// append the base64 encoded image to the "images" string slice
+			images = append(images, base64image)
+		}
+	}
+
+	var prompt string
+	switch len(images) {
+	case 0:
+		return "", errNoImages
+	case 1:
+		if desiredWordCount > 0 {
+			prompt = fmt.Sprintf("Describe this image using a maximum of %d words:", desiredWordCount)
+		} else {
+			prompt = "Describe this image:"
+		}
+	default:
+		if desiredWordCount > 0 {
+			prompt = fmt.Sprintf("Describe these images using a maximum of %d words:", desiredWordCount)
+		} else {
+			prompt = "Describe these images:"
+		}
+	}
+
+	promptAndImages := append([]string{prompt}, images...)
+
+	return oc.GetOutput(promptAndImages...)
+}
