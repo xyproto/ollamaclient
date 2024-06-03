@@ -7,9 +7,9 @@ import (
 )
 
 // Version sends a request to get the current Ollama version
-func (oc *Config) Version(prompt string) (string, error) {
+func (oc *Config) Version() (string, error) {
 	if oc.Verbose {
-		fmt.Printf("Sending a GET request to %s/api/version\n", oc.ServerAddr)
+		fmt.Printf("Sending a request to %s/api/version\n", oc.ServerAddr)
 	}
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
