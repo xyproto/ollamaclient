@@ -35,7 +35,13 @@ func TestDescribeImage(t *testing.T) {
 	oc.ModelName = "llava"
 	oc.Verbose = true
 
-	err := oc.PullIfNeeded(true)
+	ver, err := oc.Version()
+	if err != nil {
+		t.Fatalf("Failed to fetch the current Ollama version: %v", err)
+	}
+	fmt.Printf("Ollama version %s\n", ver)
+
+	err = oc.PullIfNeeded(true)
 	if err != nil {
 		t.Fatalf("Failed to pull model: %v", err)
 	}
