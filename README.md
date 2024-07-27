@@ -52,7 +52,7 @@ Grazing in green fields so serene
 Nature's masterpiece
 ```
 
-Make sure to install and run Ollama first.
+Make sure to install and run Ollama first, or set `OLLAMA_HOST` to a valid host.
 
 ### Using images in the prompt, with the `llava` model
 
