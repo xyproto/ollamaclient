@@ -22,7 +22,7 @@ func main() {
     // See: https://ollama.com/library/
     //oc.ModelName = "gemma:latest"
     //oc.ModelName = "mixtral:instruct"
-    //oc.ModelName = "nous-hermes:7b-llama2-q2_K"
+    //oc.ModelName = "llama3.1:latest"
 
     oc.Verbose = true
 
@@ -96,7 +96,7 @@ See `v2/cmd/describeimage` for an example that uses a custom prompt.
 These environment variables are supported:
 
 * `OLLAMA_HOST` (`http://localhost:11434` by default)
-* `OLLAMA_MODEL` (`nous-hermes:7b-llama2-q2_K` by default)
+* `OLLAMA_MODEL` (`llama3.1:latest` by default)
 * `OLLAMA_VERBOSE` (`false` by default)
 
 ### The `summarize` utility
@@ -104,7 +104,7 @@ These environment variables are supported:
 Getting started:
 
 1. Install `ollama` and start it as a service.
-2. Run `ollama pull nous-hermes:7b-llama2-q2_K` to fetch the `nous-hermes:7b-llama2-q2_K` model.
+2. Run `ollama pull llama3.1:latest` to fetch the `llama3.1:latest` model.
 3. Install the `summarize` utility: `go install github.com/xyproto/ollamaclient/cmd/summarize@latest`
 4. Summarize a README.md file and a source code file: `summarize README.md ollamaclient.go`
 5. Write a poem about one or more files: `summarize --prompt "Write a poem about the following files:" README.md`
@@ -117,7 +117,7 @@ Usage:
 
 Flags:
 
-- `-m`, `--model`: Specify an Ollama model. The default is `nous-hermes:latest`.
+- `-m`, `--model`: Specify an Ollama model. The default is `llama3.1:latest`.
 - `-o`, `--output`: Define an output file to store the summary.
 - `-p`, `--prompt`: Specify a custom prompt header for summary. The default is `Write a short summary of a project that contains the following files:`
 - `-w`, `--wrap`: Set the word wrap width. Use -1 to detect the terminal width.
