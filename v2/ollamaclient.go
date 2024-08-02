@@ -115,7 +115,7 @@ func (oc *Config) SetContextLength(contextLength int64) {
 	oc.ContextLength = contextLength
 }
 
-// SetTools sets the tools for this Ollama config
+// SetTool sets the tools for this Ollama config
 func (oc *Config) SetTool(tool json.RawMessage) {
 	oc.Tools = append(oc.Tools, tool)
 }
