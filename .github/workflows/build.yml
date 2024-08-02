@@ -19,14 +19,16 @@ jobs:
       with:
         go-version: '1.22'
 
-    - name: Install Ollama
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Pull and run Ollama Docker container
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ollama
-        sudo systemctl start ollama
+        docker run -d --name ollama -p 8080:8080 ollama/ollama:latest
+        sleep 10 # Wait for the container to be fully up and running
 
     - name: Verify Ollama installation
-      run: ollama --version
+      run: docker exec ollama ollama --version
 
     - name: Run tests
       run: go test -run PullGemmaIntegration -run Stream -v ./v2
