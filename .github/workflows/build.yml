@@ -19,9 +19,6 @@ jobs:
       with:
         go-version: '1.22'
 
-    - name: Get dependencies
-      run: go mod tidy
-
     - name: Install Ollama
       run: |
         sudo apt-get update
