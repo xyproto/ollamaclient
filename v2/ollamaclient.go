@@ -16,11 +16,62 @@ import (
 )
 
 const (
-	defaultModel       = "gemma"          // tinyllama would also be a good default
+	defaultModel       = "llama3.1"
 	defaultHTTPTimeout = 10 * time.Minute // per HTTP request to Ollama
 	defaultFixedSeed   = 256              // for when generated output should not be random, but have temperature 0 and a specific seed
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
 )
+
+// RequestOptions holds the seed and temperature
+type RequestOptions struct {
+	Seed          int     `json:"seed"`
+	Temperature   float64 `json:"temperature"`
+	ContextLength int64   `json:"num_ctx,omitempty"`
+}
+
+// GenerateRequest represents the request payload for generating output
+type GenerateRequest struct {
+	Model   string         `json:"model"`
+	Prompt  string         `json:"prompt,omitempty"`
+	Images  []string       `json:"images,omitempty"` // base64 encoded images
+	Stream  bool           `json:"stream,omitempty"`
+	Options RequestOptions `json:"options,omitempty"`
+}
+
+// GenerateResponse represents the response data from the generate API call
+type GenerateResponse struct {
+	Model              string `json:"model"`
+	CreatedAt          string `json:"created_at"`
+	Response           string `json:"response"`
+	Context            []int  `json:"context,omitempty"`
+	TotalDuration      int64  `json:"total_duration,omitempty"`
+	LoadDuration       int64  `json:"load_duration,omitempty"`
+	SampleCount        int    `json:"sample_count,omitempty"`
+	SampleDuration     int64  `json:"sample_duration,omitempty"`
+	PromptEvalCount    int    `json:"prompt_eval_count,omitempty"`
+	PromptEvalDuration int64  `json:"prompt_eval_duration,omitempty"`
+	EvalCount          int    `json:"eval_count,omitempty"`
+	EvalDuration       int64  `json:"eval_duration,omitempty"`
+	Done               bool   `json:"done"`
+}
+
+// Model represents a downloaded model
+type Model struct {
+	Modified time.Time `json:"modified_at"`
+	Name     string    `json:"name"`
+	Digest   string    `json:"digest"`
+	Size     int64     `json:"size"`
+}
+
+// ListResponse represents the response data from the tag API call
+type ListResponse struct {
+	Models []Model `json:"models"`
+}
+
+// VersionResponse represents the response data containing the Ollama version
+type VersionResponse struct {
+	Version string `json:"version"`
+}
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
