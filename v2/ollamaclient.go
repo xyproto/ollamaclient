@@ -20,6 +20,7 @@ const (
 	defaultHTTPTimeout = 10 * time.Minute // per HTTP request to Ollama
 	defaultFixedSeed   = 256              // for when generated output should not be random, but have temperature 0 and a specific seed
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
+	mimeJSON           = "application/json"
 )
 
 // RequestOptions holds the seed and temperature
@@ -238,7 +239,7 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return OutputChat{}, err
 	}
@@ -328,7 +329,7 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -519,7 +520,7 @@ func (oc *Config) CreateModel(name, modelfile string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(oc.ServerAddr+"/api/create", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/create", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}
@@ -534,7 +535,7 @@ func (oc *Config) CopyModel(source, destination string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(oc.ServerAddr+"/api/copy", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/copy", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}

@@ -101,7 +101,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}
