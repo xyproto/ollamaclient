@@ -84,10 +84,7 @@ func main() {
 
 	prompt := promptHeader + "\n\n" + sb.String()
 
-	oc := ollamaclient.New()
-	if model != defaultModel {
-		oc.ModelName = model
-	}
+	oc := ollamaclient.New(model)
 
 	if err := oc.PullIfNeeded(verbose); err != nil {
 		fmt.Println("Error:", err)

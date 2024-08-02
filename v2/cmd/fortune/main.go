@@ -14,8 +14,7 @@ const (
 )
 
 func main() {
-	oc := ollamaclient.New()
-	oc.ModelName = model
+	oc := ollamaclient.New(model)
 
 	err := oc.PullIfNeeded(true)
 
