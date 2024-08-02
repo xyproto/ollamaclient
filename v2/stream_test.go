@@ -8,7 +8,7 @@ import (
 const prompt = "Write a haiku about nine llamas."
 
 func TestStream(t *testing.T) {
-	oc := New("tinyllama")
+	oc := New("gemma2:2b")
 	oc.Verbose = true
 
 	err := oc.PullIfNeeded(true)

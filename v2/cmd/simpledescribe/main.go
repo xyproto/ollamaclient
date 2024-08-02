@@ -9,7 +9,6 @@ import (
 
 func main() {
 	oc := ollamaclient.New("llava")
-
 	oc.SetReproducible()
 	if err := oc.PullIfNeeded(true); err != nil {
 		log.Fatalln(err)

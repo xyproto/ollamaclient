@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestPullTinyLlamaIntegration(t *testing.T) {
-	oc := New("tinyllama")
+func TestPullGemmaIntegration(t *testing.T) {
+	oc := New("gemma2:2b")
 	oc.Verbose = true
 
 	err := oc.PullIfNeeded(true)
@@ -14,8 +14,8 @@ func TestPullTinyLlamaIntegration(t *testing.T) {
 		t.Fatalf("Failed to pull model: %v", err)
 	}
 
-	if found, err := oc.Has("tinyllama"); err != nil || !found {
-		t.Error("Expected to have 'tinyllama' model downloaded, but it's not present")
+	if found, err := oc.Has("gemma2:2b"); err != nil || !found {
+		t.Error("Expected to have 'gemma2:2b' model downloaded, but it's not present")
 	}
 
 	oc.SetRandom()

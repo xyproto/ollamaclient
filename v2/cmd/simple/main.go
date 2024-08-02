@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	oc := ollamaclient.New("tinyllama")
+	oc := ollamaclient.New("gemma2:2b")
 	if err := oc.PullIfNeeded(true); err != nil {
 		fmt.Println("Error:", err)
 		return

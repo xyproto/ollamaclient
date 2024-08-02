@@ -17,11 +17,11 @@ import (
 
 func main() {
     // Create an Ollama client configuration struct and select a model.
-    // The default model is "llama3.1". See: https://ollama.com/library/
+    // The default model is "gemma2:2b". See: https://ollama.com/library/
 
-    //oc := ollamaclient.New("gemma2:latest")
-    //oc := ollamaclient.New("tinyllama:latest")
+    //oc := ollamaclient.New("llama3.1:latest")
     //oc := ollamaclient.New("mixtral:instruct")
+    //oc := ollamaclient.New("tinyllama:latest")
 
     oc := ollamaclient.New()
 
@@ -144,7 +144,7 @@ Generate a summary with custom word wrap width:
 
 ### Testing
 
-`go test` depends on a local Ollama server being up and running, and will attempt to download the `tinyllama` model (637 MiB).
+`go test` depends on a local Ollama server being up and running, and will attempt to download the `llama3.1`, `llava` and `gemma2:2b` models.
 
 ### General info
 

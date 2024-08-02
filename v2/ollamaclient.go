@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultModel       = "llama3.1"
+	defaultModel       = "gemma2:2b"
 	defaultHTTPTimeout = 10 * time.Minute // per HTTP request to Ollama
 	defaultFixedSeed   = 256              // for when generated output should not be random, but have temperature 0 and a specific seed
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
