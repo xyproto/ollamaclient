@@ -1,0 +1,35 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Get dependencies
+      run: go mod tidy
+
+    - name: Install Ollama
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ollama
+        sudo systemctl start ollama
+
+    - name: Verify Ollama installation
+      run: ollama --version
+
+    - name: Run tests
+      run: go test -run PullGemmaIntegration -run Stream -v ./v2
