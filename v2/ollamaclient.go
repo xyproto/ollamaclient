@@ -107,10 +107,14 @@ func InitCache() error {
 }
 
 // New initializes a new Config using environment variables
-func New() *Config {
+func New(optionalModel ...string) *Config {
+	model := defaultModel
+	if len(optionalModel) > 0 {
+		model = optionalModel[0]
+	}
 	oc := Config{
 		ServerAddr:                env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		ModelName:                 env.Str("OLLAMA_MODEL", defaultModel),
+		ModelName:                 env.Str("OLLAMA_MODEL", model),
 		SeedOrNegative:            defaultFixedSeed,
 		TemperatureIfNegativeSeed: 0.8,
 		PullTimeout:               defaultPullTimeout,
