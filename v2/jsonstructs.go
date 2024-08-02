@@ -1,6 +1,9 @@
 package ollamaclient
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // RequestOptions holds the seed and temperature
 type RequestOptions struct {
@@ -16,6 +19,44 @@ type GenerateRequest struct {
 	Images  []string       `json:"images,omitempty"` // base64 encoded images
 	Stream  bool           `json:"stream,omitempty"`
 	Options RequestOptions `json:"options,omitempty"`
+}
+
+// Message is a chat message
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// GenerateChatRequest represents the request payload for generating output
+type GenerateChatRequest struct {
+	Model    string            `json:"model"`
+	Messages []Message         `json:"messages,omitempty"`
+	Images   []string          `json:"images,omitempty"` // base64 encoded images
+	Stream   bool              `json:"stream"`
+	Tools    []json.RawMessage `json:"tools,omitempty"`
+	Options  RequestOptions    `json:"options,omitempty"`
+}
+
+// MessageResponse represents the response data from the generate API call
+type MessageResponse struct {
+	Role      string     `json:"role"`
+	Content   string     `json:"content"`
+	ToolCalls []ToolCall `json:"tool_calls"`
+}
+
+// GenerateChatResponse represents the response data from the generate API call
+type GenerateChatResponse struct {
+	Model              string          `json:"model"`
+	CreatedAt          string          `json:"created_at"`
+	Message            MessageResponse `json:"message"`
+	DoneReason         string          `json:"done_reason"`
+	Done               bool            `json:"done"`
+	TotalDuration      int64           `json:"total_duration,omitempty"`
+	LoadDuration       int64           `json:"load_duration,omitempty"`
+	PromptEvalCount    int             `json:"prompt_eval_count,omitempty"`
+	PromptEvalDuration int64           `json:"prompt_eval_duration,omitempty"`
+	EvalCount          int             `json:"eval_count,omitempty"`
+	EvalDuration       int64           `json:"eval_duration,omitempty"`
 }
 
 // GenerateResponse represents the response data from the generate API call
