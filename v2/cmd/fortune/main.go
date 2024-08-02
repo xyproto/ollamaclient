@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	model  = "tinydolphin"
+	model  = "gemma2:2b"
 	prompt = "Write a silly saying, quote or joke like it could have been the output of the fortune command on Linux."
 )
 
