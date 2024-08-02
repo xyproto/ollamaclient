@@ -16,13 +16,14 @@ import (
 )
 
 func main() {
-    oc := ollamaclient.New()
+    // Create an Ollama client configuration struct and select a model.
+    // The default model is "llama3.1". See: https://ollama.com/library/
 
-    // Select a model. The default model is "tinyllama".
-    // See: https://ollama.com/library/
-    //oc.ModelName = "gemma:latest"
-    //oc.ModelName = "mixtral:instruct"
-    //oc.ModelName = "llama3.1:latest"
+    //oc := ollamaclient.New("gemma2:latest")
+    //oc := ollamaclient.New("tinyllama:latest")
+    //oc := ollamaclient.New("mixtral:instruct")
+
+    oc := ollamaclient.New()
 
     oc.Verbose = true
 
@@ -69,8 +70,7 @@ import (
 )
 
 func main() {
-    oc := ollamaclient.New()
-    oc.ModelName = "llava"
+    oc := ollamaclient.New("llava")
     oc.SetReproducible()
     if err := oc.PullIfNeeded(true); err != nil {
         log.Fatalln(err)
