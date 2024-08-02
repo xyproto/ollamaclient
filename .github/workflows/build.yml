@@ -24,8 +24,8 @@ jobs:
 
     - name: Pull and run Ollama Docker container
       run: |
-        docker run -d --name ollama -p 8080:8080 ollama/ollama:latest
-        sleep 10 # Wait for the container to be fully up and running
+        docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
+        sleep 20 # Wait for the container to be fully up and running
 
     - name: Verify Ollama installation
       run: docker exec ollama ollama --version
