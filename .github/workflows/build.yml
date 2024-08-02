@@ -31,4 +31,4 @@ jobs:
       run: docker exec ollama ollama --version
 
     - name: Run tests
-      run: go test -run PullGemmaIntegration -run Stream -v ./v2
+      run: cd v2 && go test -run PullGemmaIntegration -run Stream -v
