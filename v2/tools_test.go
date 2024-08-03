@@ -18,6 +18,7 @@ func TestTools(t *testing.T) {
 		t.Error("Expected to have 'llama3.1' model downloaded, but it's not present")
 	}
 
+	oc.SetSystemPrompt("You are a helpful assistant.")
 	oc.SetRandom()
 	oc.SetTool(json.RawMessage(`{
 		"type": "function",

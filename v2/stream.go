@@ -69,6 +69,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	if len(images) > 0 {
 		reqBody = GenerateRequest{
 			Model:  oc.ModelName,
+			System: oc.SystemPrompt,
 			Prompt: prompt,
 			Images: images,
 			Stream: true,
@@ -80,6 +81,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	} else {
 		reqBody = GenerateRequest{
 			Model:  oc.ModelName,
+			System: oc.SystemPrompt,
 			Prompt: prompt,
 			Stream: true,
 			Options: RequestOptions{
