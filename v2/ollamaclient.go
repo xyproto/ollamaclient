@@ -33,6 +33,7 @@ type RequestOptions struct {
 // GenerateRequest represents the request payload for generating output
 type GenerateRequest struct {
 	Model   string         `json:"model"`
+	System  string         `json:"system,omitempty"`
 	Prompt  string         `json:"prompt,omitempty"`
 	Images  []string       `json:"images,omitempty"` // base64 encoded images
 	Stream  bool           `json:"stream,omitempty"`
@@ -85,6 +86,7 @@ type Config struct {
 	TrimSpace                 bool
 	Verbose                   bool
 	ContextLength             int64
+	SystemPrompt              string
 	Tools                     []json.RawMessage
 }
 
@@ -161,6 +163,11 @@ func (oc *Config) SetReproducible(optionalSeed ...int) {
 	oc.SeedOrNegative = defaultFixedSeed
 }
 
+// SetSystemPrompt sets the system prompt for this Ollama config
+func (oc *Config) SetSystemPrompt(prompt string) {
+	oc.SystemPrompt = prompt
+}
+
 // SetRandom configures the generated output to not be reproducible
 func (oc *Config) SetRandom() {
 	oc.SeedOrNegative = -1
@@ -193,18 +200,24 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	}
+	messages := []Message{}
+	if oc.SystemPrompt != "" {
+		messages = append(messages, Message{
+			Role:    "system",
+			Content: oc.SystemPrompt,
+		})
+	}
+	messages = append(messages, Message{
+		Role:    "user",
+		Content: prompt,
+	})
 	var reqBody GenerateChatRequest
 	if len(images) > 0 {
 		reqBody = GenerateChatRequest{
-			Model: oc.ModelName,
-			Messages: []Message{
-				{
-					Role:    "user",
-					Content: prompt,
-				},
-			},
-			Images: images,
-			Tools:  oc.Tools,
+			Model:    oc.ModelName,
+			Messages: messages,
+			Images:   images,
+			Tools:    oc.Tools,
 			Options: RequestOptions{
 				Seed:        seed,        // set to -1 to make it random
 				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
@@ -212,14 +225,9 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 		}
 	} else {
 		reqBody = GenerateChatRequest{
-			Model: oc.ModelName,
-			Messages: []Message{
-				{
-					Role:    "user",
-					Content: prompt,
-				},
-			},
-			Tools: oc.Tools,
+			Model:    oc.ModelName,
+			Messages: messages,
+			Tools:    oc.Tools,
 			Options: RequestOptions{
 				Seed:        seed,        // set to -1 to make it random
 				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
