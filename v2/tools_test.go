@@ -20,7 +20,9 @@ func TestTools(t *testing.T) {
 
 	oc.SetSystemPrompt("You are a helpful assistant.")
 	oc.SetRandom()
-	oc.SetTool(json.RawMessage(`{
+
+	var toolGetCurrentWeather Tool
+	json.Unmarshal(json.RawMessage(`{
 		"type": "function",
 		"function": {
 		  "name": "get_current_weather",
@@ -41,7 +43,32 @@ func TestTools(t *testing.T) {
 			"required": ["location", "format"]
 		  }
 		}
-	  }`))
+	  }`), &toolGetCurrentWeather)
+
+	// toolGetCurrentWeather := Tool{
+	// 	Type: "function",
+	// 	Function: ToolFunction{
+	// 		Name:        "get_current_weather",
+	// 		Description: "Get the current weather for a location",
+	// 		Parameters: ToolParameters{
+	// 			Type: "object",
+	// 			Properties: map[string]ToolProperty{
+	// 				"location": {
+	// 					Type:        "string",
+	// 					Description: "The location to get the weather for, e.g. San Francisco, CA",
+	// 				},
+	// 				"format": {
+	// 					Type:        "string",
+	// 					Description: "The format to return the weather in, e.g. 'celsius' or 'fahrenheit'",
+	// 					Enum:        []string{"celsius", "fahrenheit"},
+	// 				},
+	// 			},
+	// 			Required: []string{"location", "format"},
+	// 		},
+	// 	},
+	// }
+
+	oc.SetTool(toolGetCurrentWeather)
 
 	prompt := "What is the weather in Toronto?"
 	generatedOutput := oc.MustOutputChat(prompt)
