@@ -10,12 +10,12 @@ import (
 
 // GenerateChatRequest represents the request payload for generating chat output
 type GenerateChatRequest struct {
-	Model    string            `json:"model"`
-	Messages []Message         `json:"messages,omitempty"`
-	Images   []string          `json:"images,omitempty"` // base64 encoded images
-	Stream   bool              `json:"stream"`
-	Tools    []json.RawMessage `json:"tools,omitempty"`
-	Options  RequestOptions    `json:"options,omitempty"`
+	Model    string         `json:"model"`
+	Messages []Message      `json:"messages,omitempty"`
+	Images   []string       `json:"images,omitempty"` // base64 encoded images
+	Stream   bool           `json:"stream"`
+	Tools    []Tool         `json:"tools,omitempty"`
+	Options  RequestOptions `json:"options,omitempty"`
 }
 
 // GenerateChatResponse represents the response data from the generate chat API call

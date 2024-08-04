@@ -87,7 +87,7 @@ type Config struct {
 	Verbose                   bool
 	ContextLength             int64
 	SystemPrompt              string
-	Tools                     []json.RawMessage
+	Tools                     []Tool
 }
 
 // Cache is used for caching reproducible results from Ollama (seed -1, temperature 0)
@@ -179,7 +179,7 @@ func (oc *Config) SetContextLength(contextLength int64) {
 }
 
 // SetTool sets the tools for this Ollama config
-func (oc *Config) SetTool(tool json.RawMessage) {
+func (oc *Config) SetTool(tool Tool) {
 	oc.Tools = append(oc.Tools, tool)
 }
 
