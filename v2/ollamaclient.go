@@ -30,33 +30,6 @@ type RequestOptions struct {
 	ContextLength int64   `json:"num_ctx,omitempty"`
 }
 
-// GenerateRequest represents the request payload for generating output
-type GenerateRequest struct {
-	Model   string         `json:"model"`
-	System  string         `json:"system,omitempty"`
-	Prompt  string         `json:"prompt,omitempty"`
-	Images  []string       `json:"images,omitempty"` // base64 encoded images
-	Stream  bool           `json:"stream,omitempty"`
-	Options RequestOptions `json:"options,omitempty"`
-}
-
-// GenerateResponse represents the response data from the generate API call
-type GenerateResponse struct {
-	Model              string `json:"model"`
-	CreatedAt          string `json:"created_at"`
-	Response           string `json:"response"`
-	Context            []int  `json:"context,omitempty"`
-	TotalDuration      int64  `json:"total_duration,omitempty"`
-	LoadDuration       int64  `json:"load_duration,omitempty"`
-	SampleCount        int    `json:"sample_count,omitempty"`
-	SampleDuration     int64  `json:"sample_duration,omitempty"`
-	PromptEvalCount    int    `json:"prompt_eval_count,omitempty"`
-	PromptEvalDuration int64  `json:"prompt_eval_duration,omitempty"`
-	EvalCount          int    `json:"eval_count,omitempty"`
-	EvalDuration       int64  `json:"eval_duration,omitempty"`
-	Done               bool   `json:"done"`
-}
-
 // Model represents a downloaded model
 type Model struct {
 	Modified time.Time `json:"modified_at"`
@@ -184,13 +157,13 @@ func (oc *Config) SetTool(tool Tool) {
 }
 
 // GetOutputChat sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, error) {
+func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return OutputChat{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -239,7 +212,7 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/chat: %s\n", oc.ServerAddr, string(reqBytes))
@@ -249,10 +222,10 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	}
 	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
-	var res = OutputChat{}
+	var res = OutputResponse{}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -264,25 +237,27 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 		if genResp.Done {
 			res.Role = genResp.Message.Role
 			res.ToolCalls = genResp.Message.ToolCalls
+			res.PromptTokens = genResp.PromptEvalCount
+			res.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
-	res.Content = strings.TrimPrefix(sb.String(), "\n")
+	res.Response = strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
-		res.Content = strings.TrimSpace(res.Content)
+		res.Response = strings.TrimSpace(res.Response)
 	}
 	return res, nil
 }
 
 // GetOutput sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+func (oc *Config) GetOutput(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		cacheKey    string
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -296,11 +271,13 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		cacheKey = prompt + "-" + oc.ModelName
 		if Cache == nil {
 			if err := InitCache(); err != nil {
-				return "", err
+				return OutputResponse{}, err
 			}
 		}
 		if entry, err := Cache.Get(cacheKey); err == nil {
-			return string(entry), nil
+			var res OutputResponse
+			json.Unmarshal(entry, &res)
+			return res, nil
 		}
 	}
 	var reqBody GenerateRequest
@@ -329,7 +306,7 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.ServerAddr, string(reqBytes))
@@ -339,9 +316,12 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	}
 	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
+	response := OutputResponse{
+		Role: "assistant",
+	}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -351,6 +331,8 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		}
 		sb.WriteString(genResp.Response)
 		if genResp.Done {
+			response.PromptTokens = genResp.PromptEvalCount
+			response.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
@@ -358,26 +340,31 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	if oc.TrimSpace {
 		outputString = strings.TrimSpace(outputString)
 	}
+	response.Response = outputString
+
 	if cacheKey != "" {
-		Cache.Set(cacheKey, []byte(outputString))
+		var data []byte
+		json.Unmarshal([]byte(data), &response)
+		Cache.Set(cacheKey, []byte(data))
 	}
-	return outputString, nil
+
+	return response, nil
 }
 
 // MustOutput returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
+func (oc *Config) MustOutput(promptAndOptionalImages ...string) OutputResponse {
 	output, err := oc.GetOutput(promptAndOptionalImages...)
 	if err != nil {
-		return err.Error()
+		return OutputResponse{Error: err.Error()}
 	}
 	return output
 }
 
 // MustOutputChat returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputChat {
+func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputResponse {
 	output, err := oc.GetOutputChat(promptAndOptionalImages...)
 	if err != nil {
-		return OutputChat{Error: err.Error()}
+		return OutputResponse{Error: err.Error()}
 	}
 	return output
 }
@@ -481,18 +468,18 @@ func ClearCache() {
 // DescribeImages can load a slice of image filenames into base64 encoded strings
 // and build a prompt that starts with "Describe this/these image(s):" followed
 // by the encoded images, and return a result. Typically used together with the "llava" model.
-func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) (string, error) {
+func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) (OutputResponse, error) {
 	var errNoImages = errors.New("must be given at least one image file to describe")
 
 	if len(imageFilenames) == 0 {
-		return "", errNoImages
+		return OutputResponse{}, errNoImages
 	}
 
 	var images []string
 	for _, imageFilename := range imageFilenames {
 		base64image, err := Base64EncodeFile(imageFilename)
 		if err != nil {
-			return "", fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
+			return OutputResponse{}, fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
 		}
 		// append the base64 encoded image to the "images" string slice
 		images = append(images, base64image)
@@ -501,7 +488,7 @@ func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) 
 	var prompt string
 	switch len(images) {
 	case 0:
-		return "", errNoImages
+		return OutputResponse{}, errNoImages
 	case 1:
 		if desiredWordCount > 0 {
 			prompt = fmt.Sprintf("Describe this image using a maximum of %d words:", desiredWordCount)

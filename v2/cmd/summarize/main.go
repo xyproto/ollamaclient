@@ -92,11 +92,13 @@ func main() {
 	}
 
 	logVerbose("[%s] Generating... ", oc.ModelName)
-	output, err := oc.GetOutput(prompt)
+	response, err := oc.GetOutput(prompt)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(1)
 	}
+
+	output := response.Response
 
 	logVerbose("OK\n")
 

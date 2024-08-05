@@ -31,9 +31,9 @@ func main() {
 	oc.SetRandom()
 
 	generatedOutput := oc.MustOutput(prompt)
-	if generatedOutput == "" {
+	if generatedOutput.Response == "" {
 		log.Println("Could not generate output.")
 	}
 
-	fmt.Println(ollamaclient.Massage(generatedOutput))
+	fmt.Println(ollamaclient.Massage(generatedOutput.Response))
 }
