@@ -7,10 +7,12 @@ import (
 	"net/http"
 )
 
+// ShowRequest represents the structure of the request payload for the "show" API.
 type ShowRequest struct {
 	Model string `json:"model"`
 }
 
+// ShowResponse represents the structure of the response payload from the "show" API.
 type ShowResponse struct {
 	License    string `json:"license"`
 	Modelfile  string `json:"modelfile"`
@@ -57,6 +59,7 @@ type ShowResponse struct {
 	ModifiedAt string `json:"modified_at"`
 }
 
+// GetShowInfo sends a request to the "show" API and returns the response with model information.
 func (oc *Config) GetShowInfo() (ShowResponse, error) {
 	reqBody := ShowRequest{
 		Model: oc.ModelName,
