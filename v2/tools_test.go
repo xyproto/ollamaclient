@@ -45,33 +45,11 @@ func TestTools(t *testing.T) {
 		}
 	  }`), &toolGetCurrentWeather)
 
-	// toolGetCurrentWeather := Tool{
-	// 	Type: "function",
-	// 	Function: ToolFunction{
-	// 		Name:        "get_current_weather",
-	// 		Description: "Get the current weather for a location",
-	// 		Parameters: ToolParameters{
-	// 			Type: "object",
-	// 			Properties: map[string]ToolProperty{
-	// 				"location": {
-	// 					Type:        "string",
-	// 					Description: "The location to get the weather for, e.g. San Francisco, CA",
-	// 				},
-	// 				"format": {
-	// 					Type:        "string",
-	// 					Description: "The format to return the weather in, e.g. 'celsius' or 'fahrenheit'",
-	// 					Enum:        []string{"celsius", "fahrenheit"},
-	// 				},
-	// 			},
-	// 			Required: []string{"location", "format"},
-	// 		},
-	// 	},
-	// }
-
 	oc.SetTool(toolGetCurrentWeather)
 
-	prompt := "What is the weather in Toronto?"
-	generatedOutput := oc.MustOutputChat(prompt)
+	const prompt = "What is the weather in Toronto?"
+
+	generatedOutput := oc.MustGetChatResponse(prompt)
 	if generatedOutput.Error != "" {
 		t.Error(generatedOutput.Error)
 	}

@@ -156,8 +156,8 @@ func (oc *Config) SetTool(tool Tool) {
 	oc.Tools = append(oc.Tools, tool)
 }
 
-// GetOutputChat sends a request to the Ollama API and returns the generated response
-func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputResponse, error) {
+// GetChatResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
@@ -249,8 +249,8 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputRespon
 	return res, nil
 }
 
-// GetOutputResponse sends a request to the Ollama API and returns the generated response
-func (oc *Config) GetOutputResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
+// GetResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		cacheKey    string
@@ -351,7 +351,7 @@ func (oc *Config) GetOutputResponse(promptAndOptionalImages ...string) (OutputRe
 
 // GetOutput sends a request to the Ollama API and returns the generated output string
 func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
-	resp, err := oc.GetOutputResponse(promptAndOptionalImages...)
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
 	if err != nil {
 		return "", err
 	}
@@ -367,18 +367,18 @@ func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	return output
 }
 
-// MustOutputResponse returns the response from Ollama, or an error if not
-func (oc *Config) MustOutputResponse(promptAndOptionalImages ...string) OutputResponse {
-	resp, err := oc.GetOutputResponse(promptAndOptionalImages...)
+// MustGetResponse returns the response from Ollama, or an error if not
+func (oc *Config) MustGetResponse(promptAndOptionalImages ...string) OutputResponse {
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
 	if err != nil {
 		return OutputResponse{Error: err.Error()}
 	}
 	return resp
 }
 
-// MustOutputChat returns the response from Ollama, or a response with an error if not
-func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputResponse {
-	output, err := oc.GetOutputChat(promptAndOptionalImages...)
+// MustGetChatResponse returns the response from Ollama, or a response with an error if not
+func (oc *Config) MustGetChatResponse(promptAndOptionalImages ...string) OutputResponse {
+	output, err := oc.GetChatResponse(promptAndOptionalImages...)
 	if err != nil {
 		return OutputResponse{Error: err.Error()}
 	}
