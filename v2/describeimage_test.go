@@ -36,8 +36,8 @@ func TestDescribeImage(t *testing.T) {
 
 	prompt := "Describe this image:"
 	generatedOutput := oc.MustOutput(prompt, base64image)
-	if generatedOutput.Response == "" {
+	if generatedOutput == "" {
 		t.Fatalf("Generated output for the prompt %s is empty.\n", prompt)
 	}
-	fmt.Println(Massage(generatedOutput.Response))
+	fmt.Println(Massage(generatedOutput))
 }

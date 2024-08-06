@@ -22,8 +22,8 @@ func TestPullGemmaIntegration(t *testing.T) {
 
 	prompt := "Generate an imperative sentence. Keep it brief. Only output the sentence itself. Skip explanations, introductions or preamble."
 	generatedOutput := oc.MustOutput(prompt)
-	if generatedOutput.Response == "" {
+	if generatedOutput == "" {
 		t.Fatalf("Generated output for the prompt %s is empty.\n", prompt)
 	}
-	fmt.Println(Massage(generatedOutput.Response))
+	fmt.Println(Massage(generatedOutput))
 }

@@ -156,7 +156,7 @@ func (oc *Config) SetTool(tool Tool) {
 	oc.Tools = append(oc.Tools, tool)
 }
 
-// GetOutputChat sends a request to the Ollama API and returns the generated output.
+// GetOutputChat sends a request to the Ollama API and returns the generated response
 func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
@@ -249,8 +249,8 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputRespon
 	return res, nil
 }
 
-// GetOutput sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutput(promptAndOptionalImages ...string) (OutputResponse, error) {
+// GetOutputResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetOutputResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		cacheKey    string
@@ -341,26 +341,42 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (OutputResponse, 
 		outputString = strings.TrimSpace(outputString)
 	}
 	response.Response = outputString
-
 	if cacheKey != "" {
 		var data []byte
 		json.Unmarshal([]byte(data), &response)
 		Cache.Set(cacheKey, []byte(data))
 	}
-
 	return response, nil
 }
 
-// MustOutput returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutput(promptAndOptionalImages ...string) OutputResponse {
+// GetOutput sends a request to the Ollama API and returns the generated output string
+func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+	resp, err := oc.GetOutputResponse(promptAndOptionalImages...)
+	if err != nil {
+		return "", err
+	}
+	return resp.Response, nil
+}
+
+// MustOutput returns the generated output string from Ollama, or the error as a string if not
+func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	output, err := oc.GetOutput(promptAndOptionalImages...)
 	if err != nil {
-		return OutputResponse{Error: err.Error()}
+		return err.Error()
 	}
 	return output
 }
 
-// MustOutputChat returns the output from Ollama, or the error as a string if not
+// MustOutputResponse returns the response from Ollama, or an error if not
+func (oc *Config) MustOutputResponse(promptAndOptionalImages ...string) OutputResponse {
+	resp, err := oc.GetOutputResponse(promptAndOptionalImages...)
+	if err != nil {
+		return OutputResponse{Error: err.Error()}
+	}
+	return resp
+}
+
+// MustOutputChat returns the response from Ollama, or a response with an error if not
 func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputResponse {
 	output, err := oc.GetOutputChat(promptAndOptionalImages...)
 	if err != nil {
@@ -468,18 +484,18 @@ func ClearCache() {
 // DescribeImages can load a slice of image filenames into base64 encoded strings
 // and build a prompt that starts with "Describe this/these image(s):" followed
 // by the encoded images, and return a result. Typically used together with the "llava" model.
-func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) (OutputResponse, error) {
+func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) (string, error) {
 	var errNoImages = errors.New("must be given at least one image file to describe")
 
 	if len(imageFilenames) == 0 {
-		return OutputResponse{}, errNoImages
+		return "", errNoImages
 	}
 
 	var images []string
 	for _, imageFilename := range imageFilenames {
 		base64image, err := Base64EncodeFile(imageFilename)
 		if err != nil {
-			return OutputResponse{}, fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
+			return "", fmt.Errorf("could not base64 encode %s: %v", imageFilename, err)
 		}
 		// append the base64 encoded image to the "images" string slice
 		images = append(images, base64image)
@@ -488,7 +504,7 @@ func (oc *Config) DescribeImages(imageFilenames []string, desiredWordCount int) 
 	var prompt string
 	switch len(images) {
 	case 0:
-		return OutputResponse{}, errNoImages
+		return "", errNoImages
 	case 1:
 		if desiredWordCount > 0 {
 			prompt = fmt.Sprintf("Describe this image using a maximum of %d words:", desiredWordCount)

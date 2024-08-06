@@ -102,14 +102,11 @@ func main() {
 	promptAndImages := append([]string{prompt}, images...)
 
 	logVerbose("[%s] Generating... ", oc.ModelName)
-	response, err := oc.GetOutput(promptAndImages...)
+	output, err := oc.GetOutput(promptAndImages...)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(1)
 	}
-
-	output := response.Response
-
 	logVerbose("OK\n")
 
 	if output == "" {
