@@ -5,10 +5,11 @@ import (
 	"log"
 
 	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 )
 
 func main() {
-	oc := ollamaclient.New("llava")
+	oc := ollamaclient.New(usermodel.GetVisionModel())
 	oc.SetReproducible()
 	if err := oc.PullIfNeeded(true); err != nil {
 		log.Fatalln(err)

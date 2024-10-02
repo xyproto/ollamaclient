@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 )
 
 func main() {
-	oc := ollamaclient.New("gemma2:2b")
+	oc := ollamaclient.New(usermodel.GetChatModel())
 	if err := oc.PullIfNeeded(true); err != nil {
 		fmt.Println("Error:", err)
 		return

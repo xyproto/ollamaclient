@@ -7,17 +7,20 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 	"github.com/xyproto/wordwrap"
 	"golang.org/x/term"
 )
 
 const (
-	versionString    = "Summarize 1.4.0"
-	defaultModel     = "nous-hermes:7b-llama2-q2_K"
+	versionString    = "Summarize 1.5.0"
 	defaultTermWidth = 79
 )
 
-var verbose bool
+var (
+	defaultModel = usermodel.GetTextGenerationModel()
+	verbose      bool
+)
 
 // Only print the provided data when in verbose mode
 func logVerbose(format string, a ...interface{}) {
