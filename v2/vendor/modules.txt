@@ -8,9 +8,18 @@ github.com/dustin/go-humanize
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/xyproto/env/v2 v2.2.5
+# github.com/xyproto/binary v1.3.3
+## explicit; go 1.18
+github.com/xyproto/binary
+# github.com/xyproto/env/v2 v2.5.0
 ## explicit; go 1.19
 github.com/xyproto/env/v2
+# github.com/xyproto/files v1.7.0
+## explicit; go 1.19
+github.com/xyproto/files
+# github.com/xyproto/usermodel v1.1.0
+## explicit; go 1.23.1
+github.com/xyproto/usermodel
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
