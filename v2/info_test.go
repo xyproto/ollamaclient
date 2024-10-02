@@ -3,7 +3,7 @@ package ollamaclient
 import "testing"
 
 func TestGetShowInfo(t *testing.T) {
-	oc := New("llama3.1")
+	oc := New("llama3.2")
 	oc.Verbose = true
 
 	err := oc.PullIfNeeded(true)
@@ -11,8 +11,8 @@ func TestGetShowInfo(t *testing.T) {
 		t.Fatalf("Failed to pull model: %v", err)
 	}
 
-	if found, err := oc.Has("llama3.1"); err != nil || !found {
-		t.Error("Expected to have 'llama3.1' model downloaded, but it's not present")
+	if found, err := oc.Has("llama3.2"); err != nil || !found {
+		t.Error("Expected to have 'llama3.2' model downloaded, but it's not present")
 	}
 
 	res, err := oc.GetShowInfo()
