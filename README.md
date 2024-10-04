@@ -140,5 +140,5 @@ Generate a summary with custom word wrap width:
 
 ### General info
 
-* Version: 2.6.0
+* Version: 2.7.0
 * License: Apache 2
