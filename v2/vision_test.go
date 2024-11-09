@@ -35,7 +35,7 @@ func TestVisionImage(t *testing.T) {
 		t.Fatalf("%s is missing or empty\n", imageFilename)
 	}
 
-	prompt := "How many puppy are there? Only numbers."
+	prompt := "How many puppy are there in this image (as a number)? And what is the color of the puppy?"
 	generatedOutput, err := oc.GetOutputChatVision(prompt, base64image)
 	if err != nil {
 		t.Fatalf("Failed to get output: %v", err)
