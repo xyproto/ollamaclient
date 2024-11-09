@@ -7,17 +7,20 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 	"github.com/xyproto/wordwrap"
 	"golang.org/x/term"
 )
 
 const (
 	versionString    = "DescribeImage 1.0.0"
-	defaultModel     = "llava"
 	defaultTermWidth = 79
 )
 
-var verbose bool
+var (
+	defaultModel = usermodel.GetVisionModel()
+	verbose      bool
+)
 
 // Only print the provided data when in verbose mode
 func logVerbose(format string, a ...interface{}) {

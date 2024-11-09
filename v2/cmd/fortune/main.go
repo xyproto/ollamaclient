@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 )
 
-const (
-	model  = "gemma2:2b"
-	prompt = "Write a silly saying, quote or joke like it could have been the output of the fortune command on Linux."
-)
+const prompt = "Write a silly saying, quote or joke like it could have been the output of the fortune command on Linux."
+
+var model = usermodel.GetChatModel()
 
 func main() {
 	oc := ollamaclient.New(model)

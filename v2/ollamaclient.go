@@ -4,6 +4,8 @@ package ollamaclient
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,33 +30,6 @@ type RequestOptions struct {
 	Seed          int     `json:"seed"`
 	Temperature   float64 `json:"temperature"`
 	ContextLength int64   `json:"num_ctx,omitempty"`
-}
-
-// GenerateRequest represents the request payload for generating output
-type GenerateRequest struct {
-	Model   string         `json:"model"`
-	System  string         `json:"system,omitempty"`
-	Prompt  string         `json:"prompt,omitempty"`
-	Images  []string       `json:"images,omitempty"` // base64 encoded images
-	Stream  bool           `json:"stream,omitempty"`
-	Options RequestOptions `json:"options,omitempty"`
-}
-
-// GenerateResponse represents the response data from the generate API call
-type GenerateResponse struct {
-	Model              string `json:"model"`
-	CreatedAt          string `json:"created_at"`
-	Response           string `json:"response"`
-	Context            []int  `json:"context,omitempty"`
-	TotalDuration      int64  `json:"total_duration,omitempty"`
-	LoadDuration       int64  `json:"load_duration,omitempty"`
-	SampleCount        int    `json:"sample_count,omitempty"`
-	SampleDuration     int64  `json:"sample_duration,omitempty"`
-	PromptEvalCount    int    `json:"prompt_eval_count,omitempty"`
-	PromptEvalDuration int64  `json:"prompt_eval_duration,omitempty"`
-	EvalCount          int    `json:"eval_count,omitempty"`
-	EvalDuration       int64  `json:"eval_duration,omitempty"`
-	Done               bool   `json:"done"`
 }
 
 // Model represents a downloaded model
@@ -183,14 +158,14 @@ func (oc *Config) SetTool(tool Tool) {
 	oc.Tools = append(oc.Tools, tool)
 }
 
-// GetOutputChat sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, error) {
+// GetChatResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return OutputChat{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -239,7 +214,7 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/chat: %s\n", oc.ServerAddr, string(reqBytes))
@@ -249,10 +224,10 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	}
 	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
-	var res = OutputChat{}
+	var res = OutputResponse{}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -264,12 +239,14 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 		if genResp.Done {
 			res.Role = genResp.Message.Role
 			res.ToolCalls = genResp.Message.ToolCalls
+			res.PromptTokens = genResp.PromptEvalCount
+			res.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
-	res.Content = strings.TrimPrefix(sb.String(), "\n")
+	res.Response = strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
-		res.Content = strings.TrimSpace(res.Content)
+		res.Response = strings.TrimSpace(res.Response)
 	}
 	return res, nil
 }
@@ -353,15 +330,15 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (Output
 	return res, nil
 }
 
-// GetOutput sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+// GetResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		cacheKey    string
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -371,15 +348,37 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	} else {
+		temperature = 0 // Since temperature is set to 0 when seed >=0
 		// The cache is only used for fixed seeds and a temperature of 0
-		cacheKey = prompt + "-" + oc.ModelName
+		keyData := struct {
+			Prompts     []string
+			ModelName   string
+			Seed        int
+			Temperature float64
+		}{
+			Prompts:     promptAndOptionalImages,
+			ModelName:   oc.ModelName,
+			Seed:        seed,
+			Temperature: temperature,
+		}
+		keyDataBytes, err := json.Marshal(keyData)
+		if err != nil {
+			return OutputResponse{}, err
+		}
+		hash := sha256.Sum256(keyDataBytes)
+		cacheKey = hex.EncodeToString(hash[:])
 		if Cache == nil {
 			if err := InitCache(); err != nil {
-				return "", err
+				return OutputResponse{}, err
 			}
 		}
 		if entry, err := Cache.Get(cacheKey); err == nil {
-			return string(entry), nil
+			var res OutputResponse
+			err = json.Unmarshal(entry, &res)
+			if err != nil {
+				return OutputResponse{}, err
+			}
+			return res, nil
 		}
 	}
 	var reqBody GenerateRequest
@@ -408,7 +407,7 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.ServerAddr, string(reqBytes))
@@ -418,9 +417,12 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	}
 	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
+	response := OutputResponse{
+		Role: "assistant",
+	}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -430,6 +432,8 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		}
 		sb.WriteString(genResp.Response)
 		if genResp.Done {
+			response.PromptTokens = genResp.PromptEvalCount
+			response.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
@@ -437,13 +441,27 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	if oc.TrimSpace {
 		outputString = strings.TrimSpace(outputString)
 	}
+	response.Response = outputString
 	if cacheKey != "" {
-		Cache.Set(cacheKey, []byte(outputString))
+		data, err := json.Marshal(response)
+		if err != nil {
+			return OutputResponse{}, err
+		}
+		Cache.Set(cacheKey, data)
 	}
-	return outputString, nil
+	return response, nil
 }
 
-// MustOutput returns the output from Ollama, or the error as a string if not
+// GetOutput sends a request to the Ollama API and returns the generated output string
+func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
+	if err != nil {
+		return "", err
+	}
+	return resp.Response, nil
+}
+
+// MustOutput returns the generated output string from Ollama, or the error as a string if not
 func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	output, err := oc.GetOutput(promptAndOptionalImages...)
 	if err != nil {
@@ -452,11 +470,20 @@ func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	return output
 }
 
-// MustOutputChat returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputChat {
-	output, err := oc.GetOutputChat(promptAndOptionalImages...)
+// MustGetResponse returns the response from Ollama, or an error if not
+func (oc *Config) MustGetResponse(promptAndOptionalImages ...string) OutputResponse {
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
 	if err != nil {
-		return OutputChat{Error: err.Error()}
+		return OutputResponse{Error: err.Error()}
+	}
+	return resp
+}
+
+// MustGetChatResponse returns the response from Ollama, or a response with an error if not
+func (oc *Config) MustGetChatResponse(promptAndOptionalImages ...string) OutputResponse {
+	output, err := oc.GetChatResponse(promptAndOptionalImages...)
+	if err != nil {
+		return OutputResponse{Error: err.Error()}
 	}
 	return output
 }

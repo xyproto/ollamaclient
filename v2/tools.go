@@ -37,11 +37,3 @@ type ToolCallFunction struct {
 type ToolCall struct {
 	Function ToolCallFunction `json:"function"`
 }
-
-// OutputChat represents the output from a chat request, including the role, content, tool calls, and any errors
-type OutputChat struct {
-	Role      string     `json:"role"`
-	Content   string     `json:"content"`
-	ToolCalls []ToolCall `json:"tool_calls"`
-	Error     string     `json:"error"`
-}

@@ -13,25 +13,16 @@ import (
     "fmt"
 
     "github.com/xyproto/ollamaclient/v2"
+    "github.com/xyproto/usermodel"
 )
 
 func main() {
-    // Create an Ollama client configuration struct and select a model.
-    // The default model is "gemma2:2b". See: https://ollama.com/library/
-
-    //oc := ollamaclient.New("llama3.1:latest")
-    //oc := ollamaclient.New("mixtral:instruct")
-    //oc := ollamaclient.New("tinyllama:latest")
-
-    oc := ollamaclient.New()
-
+    oc := ollamaclient.New(usermodel.GetTextGenerationModel())
     oc.Verbose = true
-
     if err := oc.PullIfNeeded(); err != nil {
         fmt.Println("Error:", err)
         return
     }
-
     prompt := "Write a haiku about the color of cows."
     output, err := oc.GetOutput(prompt)
     if err != nil {
@@ -45,12 +36,12 @@ func main() {
 Example output (with verbosity set to `true`):
 
 ```
-Sending request to /api/tags
-Sending request to /api/generate: {"model":"mistral:instruct","prompt":"Write a haiku about the color of cows."}
+Sending request to http://localhost:11434/api/tags
+Sending request to http://localhost:11434/api/generate: {"model":"gemma2:2b","prompt":"Write a haiku about the color of cows.","options":{"seed":256,"tempera}
 
-Majestic brown cows
-Grazing in green fields so serene
-Nature's masterpiece
+Brown hides, gentle eyes,
+Mooing low in grassy fields,
+Milk flows, life's sweet hue.
 ```
 
 Make sure to install and run Ollama first, or set `OLLAMA_HOST` to a valid host.
@@ -67,10 +58,12 @@ import (
     "log"
 
     "github.com/xyproto/ollamaclient/v2"
+    "github.com/xyproto/usermodel"
 )
 
 func main() {
-    oc := ollamaclient.New("llava")
+    model := usermodel.GetVisionModel()
+    oc := ollamaclient.New(model)
     oc.SetReproducible()
     if err := oc.PullIfNeeded(true); err != nil {
         log.Fatalln(err)
@@ -96,7 +89,7 @@ See `v2/cmd/describeimage` for an example that uses a custom prompt.
 These environment variables are supported:
 
 * `OLLAMA_HOST` (`http://localhost:11434` by default)
-* `OLLAMA_MODEL` (`llama3.1:latest` by default)
+* `OLLAMA_MODEL` (uses the model defined by [`llm-manager`](https://github.com/xyproto/llm-manager) by default)
 * `OLLAMA_VERBOSE` (`false` by default)
 
 ### The `summarize` utility
@@ -104,10 +97,9 @@ These environment variables are supported:
 Getting started:
 
 1. Install `ollama` and start it as a service.
-2. Run `ollama pull llama3.1:latest` to fetch the `llama3.1:latest` model.
-3. Install the `summarize` utility: `go install github.com/xyproto/ollamaclient/cmd/summarize@latest`
-4. Summarize a README.md file and a source code file: `summarize README.md ollamaclient.go`
-5. Write a poem about one or more files: `summarize --prompt "Write a poem about the following files:" README.md`
+2. Install the `summarize` utility: `go install github.com/xyproto/ollamaclient/cmd/summarize@latest`
+3. Summarize a README.md file and a source code file: `summarize README.md ollamaclient.go`. This will also download the model if it's the first run.
+4. Write a poem about one or more files: `summarize --prompt "Write a poem about the following files:" README.md`
 
 Usage:
 
@@ -117,7 +109,7 @@ Usage:
 
 Flags:
 
-- `-m`, `--model`: Specify an Ollama model. The default is `llama3.1:latest`.
+- `-m`, `--model`: Specify an Ollama model.
 - `-o`, `--output`: Define an output file to store the summary.
 - `-p`, `--prompt`: Specify a custom prompt header for summary. The default is `Write a short summary of a project that contains the following files:`
 - `-w`, `--wrap`: Set the word wrap width. Use -1 to detect the terminal width.
@@ -144,9 +136,9 @@ Generate a summary with custom word wrap width:
 
 ### Testing
 
-`go test` depends on a local Ollama server being up and running, and will attempt to download the `llama3.1`, `llava` and `gemma2:2b` models.
+`go test` depends on a local Ollama server being up and running, and will attempt to download and use various models.
 
 ### General info
 
-* Version: 2.4.1
+* Version: 2.7.0
 * License: Apache 2
