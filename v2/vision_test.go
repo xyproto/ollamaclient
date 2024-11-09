@@ -2,6 +2,7 @@ package ollamaclient
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ func TestVisionImage(t *testing.T) {
 		t.Fatalf("%s is missing or empty\n", imageFilename)
 	}
 
-	prompt := "How many puppy are there in this image? and what is the color of the puppy?"
+	prompt := "How many puppy are there? Only numbers."
 	generatedOutput, err := oc.GetOutputChatVision(prompt, base64image)
 	if err != nil {
 		t.Fatalf("Failed to get output: %v", err)
@@ -42,5 +43,7 @@ func TestVisionImage(t *testing.T) {
 	if len(generatedOutput.Content) == 0 {
 		t.Fatalf("Generated output for the prompt %s is empty.\n", prompt)
 	}
-	fmt.Println(generatedOutput.Content)
+	if !strings.Contains(generatedOutput.Content, "1") {
+		t.Fatalf("Generated output for the prompt %s does not contain '1'. Output: %s", prompt, generatedOutput.Content)
+	}
 }
