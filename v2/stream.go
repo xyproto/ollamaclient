@@ -35,8 +35,9 @@ type GenerateChatResponse struct {
 
 // Message is a chat message
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content"`
+	Images  []string `json:"images,omitempty"` // base64 encoded images (for vision models)
 }
 
 // MessageResponse represents the response data from the generate API call
