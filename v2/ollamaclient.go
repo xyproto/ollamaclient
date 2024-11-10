@@ -251,13 +251,13 @@ func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResp
 	return res, nil
 }
 
-func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (OutputChat, error) {
+func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (string, error) {
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return OutputChat{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -295,7 +295,7 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (Output
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return OutputChat{}, err
+		return "", err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/chat: %s\n", oc.ServerAddr, string(reqBytes))
@@ -305,10 +305,10 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (Output
 	}
 	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return OutputChat{}, err
+		return "", err
 	}
 	defer resp.Body.Close()
-	var res = OutputChat{}
+	var res = ""
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -318,14 +318,14 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (Output
 		}
 		sb.WriteString(genResp.Message.Content)
 		if genResp.Done {
-			res.Role = genResp.Message.Role
-			res.ToolCalls = genResp.Message.ToolCalls
+			d, _ := json.Marshal(genResp.Message.ToolCalls)
+			res = string(d)
 			break
 		}
 	}
-	res.Content = strings.TrimPrefix(sb.String(), "\n")
+	res = strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
-		res.Content = strings.TrimSpace(res.Content)
+		res = strings.TrimSpace(res)
 	}
 	return res, nil
 }
