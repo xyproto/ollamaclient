@@ -40,10 +40,10 @@ func TestVisionImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get output: %v", err)
 	}
-	if len(generatedOutput.Content) == 0 {
+	if len(generatedOutput) == 0 {
 		t.Fatalf("Generated output for the prompt %s is empty.\n", prompt)
 	}
-	if !strings.Contains(generatedOutput.Content, "1") {
-		t.Fatalf("Generated output for the prompt %s does not contain '1'. Output: %s", prompt, generatedOutput.Content)
+	if !strings.Contains(generatedOutput, "1") {
+		t.Fatalf("Generated output for the prompt %s does not contain '1'. Output: %s", prompt, generatedOutput)
 	}
 }
