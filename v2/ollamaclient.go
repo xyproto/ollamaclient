@@ -251,6 +251,8 @@ func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResp
 	return res, nil
 }
 
+// GetOutputChatVision sends a request to the Ollama API and returns the generated response.
+// It is similar to GetChatResponse, but it adds the images into the Message struct before sending them.
 func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (string, error) {
 	var (
 		temperature float64
