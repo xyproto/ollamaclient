@@ -4,8 +4,8 @@ import "strings"
 
 // Massage will try to extract a shorter message from a longer LLM output
 // using pretty "hacky" string manipulation techniques.
-// If the optional noUppercaseLetter argument is false, the first letter will not be made uppercase.
-func Massage(generatedOutput string, noUppercaseLetter ...bool) string {
+// If the optional uppercaseLetter argument is false, the first letter will not be made uppercase.
+func Massage(generatedOutput string, uppercaseLetter ...bool) string {
 	s := generatedOutput
 	// Keep the part after ":", if applicable
 	if strings.Contains(s, ":") {
@@ -70,7 +70,7 @@ func Massage(generatedOutput string, noUppercaseLetter ...bool) string {
 		return strings.TrimSpace(generatedOutput)
 	}
 
-	if !(len(noUppercaseLetter) > 0 && !noUppercaseLetter[0]) {
+	if !(len(uppercaseLetter) > 0 && !uppercaseLetter[0]) {
 		// Let the first letter be uppercase
 		s = strings.ToUpper(string([]rune(s)[0])) + string([]rune(s)[1:])
 	}
