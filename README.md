@@ -44,7 +44,7 @@ Mooing low in grassy fields,
 Milk flows, life's sweet hue.
 ```
 
-Make sure to install and run Ollama first, or set `OLLAMA_HOST` to a valid host.
+Make sure to install and run Ollama locally first, or set `OLLAMA_HOST` to a valid host.
 
 ### Using images in the prompt, with the `llava` model
 
