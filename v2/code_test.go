@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const codeCompleteModel = "deepseek-coder-v2:latest"
+const codeCompleteModel = "deepseek-coder-v2:16b"
 
 func TestBetween(t *testing.T) {
 	const (
