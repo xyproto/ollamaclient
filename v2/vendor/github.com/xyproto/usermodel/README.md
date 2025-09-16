@@ -1,6 +1,10 @@
 # usermodel
 
-Given a task, return the user-configured LLM model by executing [`llm-manager`](https://github.com/xyproto/llm-manager), or else return a default model for the given task.
+Given a task string (like `code-completion`), return the user-configured Ollama model for this task.
+
+The user-configured Ollama model is found by examining `~/.config/llm-manager/llm.conf` and `/etc/llm.conf` and if that does not work out, by executing [`llm-manager`](https://github.com/xyproto/llm-manager).
+
+If no user-configured model is available, return a default model.
 
 ### Example use
 
@@ -18,11 +22,31 @@ func main() {
 }
 ```
 
+### Exported types
+
+```go
+type Task string
+```
+
+### Exported constants
+
+```go
+ChatTask           = "chat"
+CodeTask           = "code"
+CodeCompletionTask = "code-completion"
+TestTask           = "test"
+TextGenerationTask = "text-generation"
+ToolUseTask        = "tool-use"
+TranslationTask    = "translation"
+VisionTask         = "vision"
+```
+
 ### Exported functions
 
 ```go
 func AvailableTasks() []Task
 func GetChatModel() string
+func GetCodeModel() string
 func GetCodeCompletionModel() string
 func GetTestModel() string
 func GetTextGenerationModel() string
@@ -34,6 +58,6 @@ func Get(task Task) string
 
 ### General info
 
-* Version: 1.1.0
+* Version: 1.2.3
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -9,13 +9,13 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/spf13/pflag v1.0.5
 	github.com/xyproto/env/v2 v2.5.3
-	github.com/xyproto/usermodel v1.1.0
+	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/term v0.17.0
 )
 
 require (
 	github.com/xyproto/binary v1.3.3 // indirect
-	github.com/xyproto/files v1.7.0 // indirect
+	github.com/xyproto/files v1.9.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 )
