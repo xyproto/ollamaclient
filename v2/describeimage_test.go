@@ -7,8 +7,6 @@ import (
 	"github.com/xyproto/usermodel"
 )
 
-const imageDescriptionModel = "llava:7b"
-
 func TestDescribeImagePuppy(t *testing.T) {
 	oc := New(usermodel.GetVisionModel())
 	oc.Verbose = true
@@ -21,8 +19,8 @@ func TestDescribeImagePuppy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to pull model: %v", err)
 	}
-	if found, err := oc.Has(imageDescriptionModel); err != nil || !found {
-		t.Errorf("Expected to have %s model downloaded, but it's not present", imageDescriptionModel)
+	if found, err := oc.HasModel(); err != nil || !found {
+		t.Errorf("Expected to have %s model downloaded, but it's not present", oc.ModelName)
 	}
 	oc.SetReproducible()
 	imageFilename := "img/puppy.png"
@@ -50,8 +48,8 @@ func TestDescribeImageCat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to pull model: %v", err)
 	}
-	if found, err := oc.Has(imageDescriptionModel); err != nil || !found {
-		t.Errorf("Expected to have %s model downloaded, but it's not present", imageDescriptionModel)
+	if found, err := oc.HasModel(); err != nil || !found {
+		t.Errorf("Expected to have %s model downloaded, but it's not present", oc.ModelName)
 	}
 	oc.SetReproducible()
 	imageFilename := "img/meloncat.jpg"
