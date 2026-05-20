@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	versionString    = "DescribeImage 1.0.0"
+	versionString    = "DescribeImage 1.1.0"
 	defaultTermWidth = 79
 )
 
